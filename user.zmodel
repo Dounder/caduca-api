@@ -1,0 +1,24 @@
+import 'base'
+
+enum Role {
+  Admin
+  Manager
+  Staff
+  Developer
+}
+
+model User extends Base {
+  username  String @unique()
+  email     String @unique()
+  password  String
+  roles     Role[]
+
+  createdBy User?  @relation("UserCreator", fields: [createdById], references: [id])
+  creatorOf User[] @relation("UserCreator")
+
+  updatedBy User?  @relation("UserUpdater", fields: [updatedById], references: [id])
+  updaterOf User[] @relation("UserUpdater")
+
+  deletedBy User?  @relation("UserDeleter", fields: [deletedById], references: [id])
+  deleterOf User[] @relation("UserDeleter")
+}
