@@ -2,15 +2,16 @@ import { Module } from '@nestjs/common';
 import { JwtModule } from '@nestjs/jwt';
 
 import { envs } from 'src/config';
-import { PrismaService } from 'src/prisma/prisma.service';
+import { PrismaModule } from 'src/prisma/prisma.module';
+import { RedisModule } from 'src/redis/redis.module';
 import { AuthController } from './auth.controller';
 import { AuthService } from './auth.service';
-import { RedisModule } from 'src/redis/redis.module';
 
 @Module({
   controllers: [AuthController],
-  providers: [AuthService, PrismaService],
+  providers: [AuthService],
   imports: [
+    PrismaModule,
     JwtModule.register({
       global: true,
       secret: envs.jwtSecret,
@@ -18,5 +19,6 @@ import { RedisModule } from 'src/redis/redis.module';
     }),
     RedisModule,
   ],
+  exports: [AuthService],
 })
 export class AuthModule {}
