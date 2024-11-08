@@ -1,4 +1,5 @@
 import 'user'
+import 'product'
 
 datasource db {
   provider = "postgresql"
