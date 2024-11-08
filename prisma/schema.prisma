@@ -37,4 +37,6 @@ model User {
   updaterOf   User[]    @relation("UserUpdater")
   deletedBy   User?     @relation("UserDeleter", fields: [deletedById], references: [id])
   deleterOf   User[]    @relation("UserDeleter")
+
+  @@map("user")
 }
