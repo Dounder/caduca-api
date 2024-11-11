@@ -72,7 +72,7 @@ model ProductCode {
   createdById String?   @map("created_by")
   updatedById String?   @map("updated_by")
   deletedById String?   @map("deleted_by")
-  code        String
+  code        Int       @unique() @default(autoincrement())
   productId   String    @map("product_id")
   product     Product   @relation(fields: [productId], references: [id], onDelete: Cascade)
   createdBy   User?     @relation("ProductCodeCreator", fields: [createdById], references: [id], onDelete: SetNull)

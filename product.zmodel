@@ -13,7 +13,7 @@ model Product extends Base {
 
 model ProductCode extends Base {
   @@map('product_code')
-  code      String
+  code      Int     @unique @default(autoincrement())
 
   productId String  @map('product_id')
   product   Product @relation(fields: [productId], references: [id], onDelete: Cascade)
