@@ -1,0 +1,24 @@
+import 'base'
+import 'user'
+
+model Product extends Base {
+  @@map('product')
+  name      String
+  codes     ProductCode[]
+
+  createdBy User?         @relation("ProductCreator", fields: [createdById], references: [id], onDelete: SetNull)
+  updatedBy User?         @relation("ProductUpdater", fields: [updatedById], references: [id], onDelete: SetNull)
+  deletedBy User?         @relation("ProductDeleter", fields: [deletedById], references: [id], onDelete: SetNull)
+}
+
+model ProductCode extends Base {
+  @@map('product_code')
+  code      Int     @unique @default(autoincrement())
+
+  productId String  @map('product_id')
+  product   Product @relation(fields: [productId], references: [id], onDelete: Cascade)
+
+  createdBy User?   @relation("ProductCodeCreator", fields: [createdById], references: [id], onDelete: SetNull)
+  updatedBy User?   @relation("ProductCodeUpdater", fields: [updatedById], references: [id], onDelete: SetNull)
+  deletedBy User?   @relation("ProductCodeDeleter", fields: [deletedById], references: [id], onDelete: SetNull)
+}

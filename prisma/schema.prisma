@@ -20,6 +20,51 @@ enum Role {
 }
 
 model User {
+  id                 String        @id() @default(cuid())
+  createdAt          DateTime      @default(now()) @map("created_at")
+  updatedAt          DateTime      @updatedAt() @map("updated_at")
+  deletedAt          DateTime?     @map("deleted_at")
+  createdById        String?       @map("created_by")
+  updatedById        String?       @map("updated_by")
+  deletedById        String?       @map("deleted_by")
+  username           String        @unique() @db.VarChar(20)
+  email              String        @unique() @db.VarChar(50)
+  password           String        @db.VarChar(100)
+  roles              Role[]
+  createdBy          User?         @relation("UserCreator", fields: [createdById], references: [id])
+  creatorOf          User[]        @relation("UserCreator")
+  updatedBy          User?         @relation("UserUpdater", fields: [updatedById], references: [id])
+  updaterOf          User[]        @relation("UserUpdater")
+  deletedBy          User?         @relation("UserDeleter", fields: [deletedById], references: [id])
+  deleterOf          User[]        @relation("UserDeleter")
+  productCreated     Product[]     @relation("ProductCreator")
+  productUpdated     Product[]     @relation("ProductUpdater")
+  productDeleted     Product[]     @relation("ProductDeleter")
+  productCodeCreated ProductCode[] @relation("ProductCodeCreator")
+  productCodeUpdated ProductCode[] @relation("ProductCodeUpdater")
+  productCodeDeleted ProductCode[] @relation("ProductCodeDeleter")
+
+  @@map("user")
+}
+
+model Product {
+  id          String        @id() @default(cuid())
+  createdAt   DateTime      @default(now()) @map("created_at")
+  updatedAt   DateTime      @updatedAt() @map("updated_at")
+  deletedAt   DateTime?     @map("deleted_at")
+  createdById String?       @map("created_by")
+  updatedById String?       @map("updated_by")
+  deletedById String?       @map("deleted_by")
+  name        String
+  codes       ProductCode[]
+  createdBy   User?         @relation("ProductCreator", fields: [createdById], references: [id], onDelete: SetNull)
+  updatedBy   User?         @relation("ProductUpdater", fields: [updatedById], references: [id], onDelete: SetNull)
+  deletedBy   User?         @relation("ProductDeleter", fields: [deletedById], references: [id], onDelete: SetNull)
+
+  @@map("product")
+}
+
+model ProductCode {
   id          String    @id() @default(cuid())
   createdAt   DateTime  @default(now()) @map("created_at")
   updatedAt   DateTime  @updatedAt() @map("updated_at")
@@ -27,14 +72,12 @@ model User {
   createdById String?   @map("created_by")
   updatedById String?   @map("updated_by")
   deletedById String?   @map("deleted_by")
-  username    String    @unique() @db.VarChar(20)
-  email       String    @unique() @db.VarChar(50)
-  password    String    @db.VarChar(100)
-  roles       Role[]
-  createdBy   User?     @relation("UserCreator", fields: [createdById], references: [id])
-  creatorOf   User[]    @relation("UserCreator")
-  updatedBy   User?     @relation("UserUpdater", fields: [updatedById], references: [id])
-  updaterOf   User[]    @relation("UserUpdater")
-  deletedBy   User?     @relation("UserDeleter", fields: [deletedById], references: [id])
-  deleterOf   User[]    @relation("UserDeleter")
+  code        Int       @unique() @default(autoincrement())
+  productId   String    @map("product_id")
+  product     Product   @relation(fields: [productId], references: [id], onDelete: Cascade)
+  createdBy   User?     @relation("ProductCodeCreator", fields: [createdById], references: [id], onDelete: SetNull)
+  updatedBy   User?     @relation("ProductCodeUpdater", fields: [updatedById], references: [id], onDelete: SetNull)
+  deletedBy   User?     @relation("ProductCodeDeleter", fields: [deletedById], references: [id], onDelete: SetNull)
+
+  @@map("product_code")
 }
