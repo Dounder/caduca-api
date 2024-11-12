@@ -9,3 +9,11 @@ abstract model Base {
   updatedById String?   @map("updated_by")
   deletedById String?   @map("deleted_by")
 }
+
+abstract model BaseLog {
+  id          String   @id() @default(cuid())
+  message     String
+
+  createdAt   DateTime @default(now()) @map("created_at")
+  createdById String   @map("created_by_id")
+}
