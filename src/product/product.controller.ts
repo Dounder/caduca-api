@@ -26,11 +26,6 @@ export class ProductController {
     return this.productService.findOne(id, user);
   }
 
-  @Get('code/:code')
-  findByCode(@Param('code', ParseIntPipe) code: number, @GetUser() user: CurrentUser) {
-    return this.productService.findByCode(code, user);
-  }
-
   @Patch(':id')
   @Auth(Role.Admin, Role.Manager, Role.Developer)
   update(
@@ -48,6 +43,7 @@ export class ProductController {
   }
 
   @Patch(':id/restore')
+  @Auth(Role.Admin, Role.Developer)
   restore(@Param('id', ParseCuidPipe) id: string, @GetUser() user: CurrentUser) {
     return this.productService.restore(id, user);
   }

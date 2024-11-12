@@ -1,16 +1,15 @@
 import { ConflictException, HttpStatus, Injectable, Logger, NotFoundException } from '@nestjs/common';
-import { Product, ProductCode, Role } from '@prisma/client';
+import { Prisma, Product, Role } from '@prisma/client';
 
-import { Base, PaginationDto } from 'src/common';
+import { PaginationDto } from 'src/common';
 import { ExceptionHandler, hasRoles, ObjectManipulator } from 'src/helpers';
 import { PrismaService } from 'src/prisma/prisma.service';
 import { CurrentUser } from 'src/user';
 import { CreateProductDto, UpdateProductDto } from './dto';
 
-const EXCLUDE_PRODUCT_FIELDS: (keyof Product)[] = ['createdById', 'updatedById', 'deletedById'];
-const EXCLUDE_PRODUCT_CODE_FIELDS: (keyof ProductCode)[] = ['createdById', 'updatedById', 'deletedById', 'productId'];
+const EXCLUDE_FIELDS: (keyof Product)[] = ['createdById', 'updatedById', 'deletedById'];
 const PRODUCT_INCLUDE_SINGLE = {
-  codes: { select: { id: true, code: true } },
+  codes: { select: { id: true, code: true }, where: { deletedAt: null }, orderBy: { code: Prisma.SortOrder.asc } },
   createdBy: { select: { id: true, username: true, email: true } },
   updatedBy: { select: { id: true, username: true, email: true } },
   deletedBy: { select: { id: true, username: true, email: true } },
@@ -57,6 +56,7 @@ export class ProductService {
         skip: (page - 1) * limit,
         where,
         include: PRODUCT_INCLUDE_LIST,
+        orderBy: { createdAt: Prisma.SortOrder.desc },
       }),
       this.prisma.product.count({ where }),
     ]);
@@ -84,26 +84,6 @@ export class ProductService {
         });
 
       return this.excludeProductFields(product);
-    } catch (error) {
-      this.exHandler.process(error);
-    }
-  }
-
-  async findByCode(code: number, user: CurrentUser) {
-    this.logger.log(`Fetching product by code: ${code}, user: ${user.username} (${user.id})`);
-    try {
-      const isAdmin = hasRoles(user.roles, [Role.Admin]);
-      const where = isAdmin ? { code } : { code, deletedAt: null };
-
-      const productCode = await this.prisma.productCode.findFirst({
-        where,
-        include: { product: { include: PRODUCT_INCLUDE_LIST } },
-      });
-
-      return {
-        ...this.excludeProductCodeFields(productCode),
-        product: this.excludeProductFields(productCode.product),
-      };
     } catch (error) {
       this.exHandler.process(error);
     }
@@ -184,10 +164,6 @@ export class ProductService {
   }
 
   private excludeProductFields(item: Product): Partial<Product> {
-    return ObjectManipulator.exclude<Product>(item, EXCLUDE_PRODUCT_FIELDS);
-  }
-
-  private excludeProductCodeFields(item: ProductCode): Partial<ProductCode> {
-    return ObjectManipulator.exclude<ProductCode>(item, EXCLUDE_PRODUCT_CODE_FIELDS);
+    return ObjectManipulator.exclude<Product>(item, EXCLUDE_FIELDS);
   }
 }
