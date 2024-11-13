@@ -43,10 +43,10 @@ model User {
   productCodeCreated ProductCode[] @relation("ProductCodeCreator")
   productCodeUpdated ProductCode[] @relation("ProductCodeUpdater")
   productCodeDeleted ProductCode[] @relation("ProductCodeDeleter")
-  clientCreated      Client[]      @relation("ClientCreator")
-  clientUpdated      Client[]      @relation("ClientUpdater")
-  clientDeleted      Client[]      @relation("ClientDeleter")
-  ClientLogCreator   ClientLog[]   @relation("ClientLogCreator")
+  customerCreated    Customer[]    @relation("CustomerCreator")
+  customerUpdated    Customer[]    @relation("CustomerUpdater")
+  customerDeleted    Customer[]    @relation("CustomerDeleter")
+  CustomerLogCreator CustomerLog[] @relation("CustomerLogCreator")
 
   @@map("user")
 }
@@ -86,33 +86,33 @@ model ProductCode {
   @@map("product_code")
 }
 
-model Client {
-  id          String      @id() @default(cuid())
-  createdAt   DateTime    @default(now()) @map("created_at")
-  updatedAt   DateTime    @updatedAt() @map("updated_at")
-  deletedAt   DateTime?   @map("deleted_at")
-  createdById String?     @map("created_by")
-  updatedById String?     @map("updated_by")
-  deletedById String?     @map("deleted_by")
-  code        Int         @unique() @default(autoincrement())
-  name        String      @db.VarChar(100)
-  address     String      @db.VarChar(1000)
-  logs        ClientLog[]
-  createdBy   User?       @relation("ClientCreator", fields: [createdById], references: [id], onDelete: SetNull)
-  updatedBy   User?       @relation("ClientUpdater", fields: [updatedById], references: [id], onDelete: SetNull)
-  deletedBy   User?       @relation("ClientDeleter", fields: [deletedById], references: [id], onDelete: SetNull)
+model Customer {
+  id          String        @id() @default(cuid())
+  createdAt   DateTime      @default(now()) @map("created_at")
+  updatedAt   DateTime      @updatedAt() @map("updated_at")
+  deletedAt   DateTime?     @map("deleted_at")
+  createdById String?       @map("created_by")
+  updatedById String?       @map("updated_by")
+  deletedById String?       @map("deleted_by")
+  code        Int           @unique() @default(autoincrement())
+  name        String        @db.VarChar(100)
+  address     String        @db.VarChar(1000)
+  logs        CustomerLog[]
+  createdBy   User?         @relation("CustomerCreator", fields: [createdById], references: [id], onDelete: SetNull)
+  updatedBy   User?         @relation("CustomerUpdater", fields: [updatedById], references: [id], onDelete: SetNull)
+  deletedBy   User?         @relation("CustomerDeleter", fields: [deletedById], references: [id], onDelete: SetNull)
 
-  @@map("client")
+  @@map("customer")
 }
 
-model ClientLog {
+model CustomerLog {
   id          String   @id() @default(cuid())
   message     String
   createdAt   DateTime @default(now()) @map("created_at")
   createdById String   @map("created_by_id")
-  clientId    String   @map("client_id")
-  client      Client   @relation(fields: [clientId], references: [id])
-  createdBy   User?    @relation("ClientLogCreator", fields: [createdById], references: [id], onDelete: Cascade)
+  customerId  String   @map("customer_id")
+  customer    Customer @relation(fields: [customerId], references: [id])
+  createdBy   User?    @relation("CustomerLogCreator", fields: [createdById], references: [id], onDelete: Cascade)
 
-  @@map("client_log")
+  @@map("customer_log")
 }

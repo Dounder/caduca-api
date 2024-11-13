@@ -1,6 +1,6 @@
 import 'base'
 import 'product'
-import 'client'
+import 'customer'
 
 enum Role {
   Admin
@@ -32,8 +32,8 @@ model User extends Base {
   productCodeUpdated ProductCode[] @relation("ProductCodeUpdater")
   productCodeDeleted ProductCode[] @relation("ProductCodeDeleter")
 
-  clientCreated      Client[]      @relation("ClientCreator")
-  clientUpdated      Client[]      @relation("ClientUpdater")
-  clientDeleted      Client[]      @relation("ClientDeleter")
-  ClientLogCreator   ClientLog[]   @relation("ClientLogCreator")
+  customerCreated    Customer[]    @relation("CustomerCreator")
+  customerUpdated    Customer[]    @relation("CustomerUpdater")
+  customerDeleted    Customer[]    @relation("CustomerDeleter")
+  CustomerLogCreator CustomerLog[] @relation("CustomerLogCreator")
 }
