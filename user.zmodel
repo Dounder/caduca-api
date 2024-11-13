@@ -35,4 +35,5 @@ model User extends Base {
   clientCreated      Client[]      @relation("ClientCreator")
   clientUpdated      Client[]      @relation("ClientUpdater")
   clientDeleted      Client[]      @relation("ClientDeleter")
+  ClientLogCreator   ClientLog[]   @relation("ClientLogCreator")
 }

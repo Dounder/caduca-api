@@ -46,6 +46,7 @@ model User {
   clientCreated      Client[]      @relation("ClientCreator")
   clientUpdated      Client[]      @relation("ClientUpdater")
   clientDeleted      Client[]      @relation("ClientDeleter")
+  ClientLogCreator   ClientLog[]   @relation("ClientLogCreator")
 
   @@map("user")
 }
@@ -111,6 +112,7 @@ model ClientLog {
   createdById String   @map("created_by_id")
   clientId    String   @map("client_id")
   client      Client   @relation(fields: [clientId], references: [id])
+  createdBy   User?    @relation("ClientLogCreator", fields: [createdById], references: [id], onDelete: Cascade)
 
   @@map("client_log")
 }
