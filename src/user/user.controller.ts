@@ -1,6 +1,5 @@
 import { Cache, CACHE_MANAGER } from '@nestjs/cache-manager';
-import { Body, Controller, Delete, Get, HttpStatus, Inject, Param, Patch, Post, Query } from '@nestjs/common';
-import { isUUID } from 'class-validator';
+import { Body, Controller, Delete, Get, Inject, Param, Patch, Post, Query } from '@nestjs/common';
 import { Role, User } from '@prisma/client';
 
 import { Auth, GetUser } from 'src/auth';
@@ -29,7 +28,9 @@ export class UserController {
 
   @Get()
   findAll(@Query() pagination: PaginationDto, @GetUser() user: CurrentUser): Promise<ListResponse<User>> {
-    return this.usersService.findAll(pagination, user);
+    return this.getCachedResponse(`user:all:${JSON.stringify(pagination)}`, () =>
+      this.usersService.findAll(pagination, user),
+    );
   }
 
   @Get(':id')
