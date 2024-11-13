@@ -1,0 +1,22 @@
+import 'base'
+import 'user'
+
+model Client extends Base {
+  @@map('client')
+  code      Int         @unique @default(autoincrement())
+  name      String      @db.VarChar(100)
+  address   String      @db.VarChar(1000)
+
+  logs      ClientLog[]
+
+  createdBy User?       @relation('ClientCreator', fields: [createdById], references: [id], onDelete: SetNull)
+  updatedBy User?       @relation('ClientUpdater', fields: [updatedById], references: [id], onDelete: SetNull)
+  deletedBy User?       @relation('ClientDeleter', fields: [deletedById], references: [id], onDelete: SetNull)
+}
+
+model ClientLog extends BaseLog {
+  @@map('client_log')
+  clientId  String @map('client_id')
+  client    Client @relation(fields: [clientId], references: [id])
+  createdBy User?  @relation('ClientLogCreator', fields: [createdById], references: [id], onDelete: Cascade)
+}

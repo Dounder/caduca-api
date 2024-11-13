@@ -43,6 +43,10 @@ model User {
   productCodeCreated ProductCode[] @relation("ProductCodeCreator")
   productCodeUpdated ProductCode[] @relation("ProductCodeUpdater")
   productCodeDeleted ProductCode[] @relation("ProductCodeDeleter")
+  clientCreated      Client[]      @relation("ClientCreator")
+  clientUpdated      Client[]      @relation("ClientUpdater")
+  clientDeleted      Client[]      @relation("ClientDeleter")
+  ClientLogCreator   ClientLog[]   @relation("ClientLogCreator")
 
   @@map("user")
 }
@@ -80,4 +84,35 @@ model ProductCode {
   deletedBy   User?     @relation("ProductCodeDeleter", fields: [deletedById], references: [id], onDelete: SetNull)
 
   @@map("product_code")
+}
+
+model Client {
+  id          String      @id() @default(cuid())
+  createdAt   DateTime    @default(now()) @map("created_at")
+  updatedAt   DateTime    @updatedAt() @map("updated_at")
+  deletedAt   DateTime?   @map("deleted_at")
+  createdById String?     @map("created_by")
+  updatedById String?     @map("updated_by")
+  deletedById String?     @map("deleted_by")
+  code        Int         @unique() @default(autoincrement())
+  name        String      @db.VarChar(100)
+  address     String      @db.VarChar(1000)
+  logs        ClientLog[]
+  createdBy   User?       @relation("ClientCreator", fields: [createdById], references: [id], onDelete: SetNull)
+  updatedBy   User?       @relation("ClientUpdater", fields: [updatedById], references: [id], onDelete: SetNull)
+  deletedBy   User?       @relation("ClientDeleter", fields: [deletedById], references: [id], onDelete: SetNull)
+
+  @@map("client")
+}
+
+model ClientLog {
+  id          String   @id() @default(cuid())
+  message     String
+  createdAt   DateTime @default(now()) @map("created_at")
+  createdById String   @map("created_by_id")
+  clientId    String   @map("client_id")
+  client      Client   @relation(fields: [clientId], references: [id])
+  createdBy   User?    @relation("ClientLogCreator", fields: [createdById], references: [id], onDelete: Cascade)
+
+  @@map("client_log")
 }
