@@ -1,14 +1,14 @@
 import { Cache, CACHE_MANAGER } from '@nestjs/cache-manager';
 import { ConflictException, HttpStatus, Inject, Injectable, Logger, NotFoundException } from '@nestjs/common';
-import { Client, Role } from '@prisma/client';
+import { Customer, Role } from '@prisma/client';
 
 import { ListResponse, PaginationDto } from 'src/common';
 import { ExceptionHandler, hasRoles, ObjectManipulator } from 'src/helpers';
 import { PrismaService } from 'src/prisma/prisma.service';
 import { CurrentUser } from 'src/user';
-import { CreateClientDto, UpdateClientDto } from './dto';
+import { CreateCustomerDto, UpdateCustomerDto } from './dto';
 
-const EXCLUDE_FIELDS: (keyof Client)[] = ['createdById', 'updatedById', 'deletedById'];
+const EXCLUDE_FIELDS: (keyof Customer)[] = ['createdById', 'updatedById', 'deletedById'];
 const INCLUDE_LIST = {
   createdBy: { select: { id: true, username: true, email: true } },
 };
@@ -19,22 +19,22 @@ const INCLUDE_SINGLE = {
 };
 
 @Injectable()
-export class ClientService {
-  private readonly logger = new Logger(ClientService.name);
-  private readonly exHandler = new ExceptionHandler(this.logger, ClientService.name);
+export class CustomerService {
+  private readonly logger = new Logger(CustomerService.name);
+  private readonly exHandler = new ExceptionHandler(this.logger, CustomerService.name);
 
   constructor(
     private readonly prisma: PrismaService,
     @Inject(CACHE_MANAGER) private readonly cacheManager: Cache,
   ) {}
 
-  async create(createClientDto: CreateClientDto, user: CurrentUser) {
-    const message = `Creating client: ${JSON.stringify(createClientDto)}, user: ${user.username} (${user.id})`;
+  async create(createCustomerDto: CreateCustomerDto, user: CurrentUser) {
+    const message = `Creating customer: ${JSON.stringify(createCustomerDto)}, user: ${user.username} (${user.id})`;
     this.logger.log(message);
     try {
-      const client = await this.prisma.client.create({
+      const customer = await this.prisma.customer.create({
         data: {
-          ...createClientDto,
+          ...createCustomerDto,
           createdBy: { connect: { id: user.id } },
           logs: { create: { message, createdBy: { connect: { id: user.id } } } },
         },
@@ -43,26 +43,26 @@ export class ClientService {
 
       this.clearCache();
 
-      return this.excludeFields(client);
+      return this.excludeFields(customer);
     } catch (error) {
       this.exHandler.process(error);
     }
   }
 
-  async findAll(pagination: PaginationDto, user: CurrentUser): Promise<ListResponse<Client>> {
-    this.logger.log(`Fetching clients: ${JSON.stringify(pagination)}, user: ${user.username} (${user.id})`);
+  async findAll(pagination: PaginationDto, user: CurrentUser): Promise<ListResponse<Customer>> {
+    this.logger.log(`Fetching customers: ${JSON.stringify(pagination)}, user: ${user.username} (${user.id})`);
     const { page, limit } = pagination;
     const isAdmin = hasRoles(user.roles, [Role.Admin]);
     const where = isAdmin ? {} : { deletedAt: null };
 
     const [data, total] = await this.prisma.$transaction([
-      this.prisma.client.findMany({
+      this.prisma.customer.findMany({
         take: limit,
         skip: (page - 1) * limit,
         where,
         include: INCLUDE_LIST,
       }),
-      this.prisma.client.count({ where }),
+      this.prisma.customer.count({ where }),
     ]);
 
     const lastPage = Math.ceil(total / limit);
@@ -70,62 +70,62 @@ export class ClientService {
     return { meta: { total, page, lastPage }, data: data.map(this.excludeFields) };
   }
 
-  async findOne(id: string, user: CurrentUser): Promise<Partial<Client>> {
-    this.logger.log(`Fetching client: ${id}, user: ${user.username} (${user.id})`);
+  async findOne(id: string, user: CurrentUser): Promise<Partial<Customer>> {
+    this.logger.log(`Fetching customer: ${id}, user: ${user.username} (${user.id})`);
     try {
       const isAdmin = hasRoles(user.roles, [Role.Admin]);
       const where = isAdmin ? { id } : { id, deletedAt: null };
 
-      const client = await this.prisma.client.findUnique({
+      const customer = await this.prisma.customer.findUnique({
         where,
         include: INCLUDE_SINGLE,
       });
 
-      if (!client)
+      if (!customer)
         throw new NotFoundException({
           status: HttpStatus.NOT_FOUND,
-          message: `[ERROR] Client with id ${id} not found`,
+          message: `[ERROR] Customer with id ${id} not found`,
         });
 
-      return this.excludeFields(client);
+      return this.excludeFields(customer);
     } catch (error) {
       this.exHandler.process(error);
     }
   }
 
-  async findByCode(code: number, user: CurrentUser): Promise<Partial<Client>> {
-    this.logger.log(`Fetching client: ${code}, user: ${user.username} (${user.id})`);
+  async findByCode(code: number, user: CurrentUser): Promise<Partial<Customer>> {
+    this.logger.log(`Fetching customer: ${code}, user: ${user.username} (${user.id})`);
     try {
       const isAdmin = hasRoles(user.roles, [Role.Admin]);
       const where = isAdmin ? { code } : { code, deletedAt: null };
 
-      const client = await this.prisma.client.findUnique({
+      const customer = await this.prisma.customer.findUnique({
         where,
         include: INCLUDE_SINGLE,
       });
 
-      if (!client)
+      if (!customer)
         throw new NotFoundException({
           status: HttpStatus.NOT_FOUND,
-          message: `[ERROR] Client with code ${code} not found`,
+          message: `[ERROR] Customer with code ${code} not found`,
         });
 
-      return this.excludeFields(client);
+      return this.excludeFields(customer);
     } catch (error) {
       this.exHandler.process(error);
     }
   }
 
-  async update(id: string, updateClientDto: UpdateClientDto, user: CurrentUser): Promise<Partial<Client>> {
-    const message = `Updating client: ${JSON.stringify({ id, ...updateClientDto })}, user: ${user.username} (${user.id})`;
+  async update(id: string, updateCustomerDto: UpdateCustomerDto, user: CurrentUser): Promise<Partial<Customer>> {
+    const message = `Updating customer: ${JSON.stringify({ id, ...updateCustomerDto })}, user: ${user.username} (${user.id})`;
     this.logger.log(message);
     try {
       await this.findOne(id, user);
 
-      const updatedClient = await this.prisma.client.update({
+      const updatedCustomer = await this.prisma.customer.update({
         where: { id },
         data: {
-          ...updateClientDto,
+          ...updateCustomerDto,
           updatedBy: { connect: { id: user.id } },
           logs: { create: { message, createdBy: { connect: { id: user.id } } } },
         },
@@ -134,25 +134,25 @@ export class ClientService {
 
       this.clearCache();
 
-      return this.excludeFields(updatedClient);
+      return this.excludeFields(updatedCustomer);
     } catch (error) {
       this.exHandler.process(error);
     }
   }
 
   async remove(id: string, user: CurrentUser) {
-    const message = `Deleting client: ${id}, user: ${user.username} (${user.id})`;
+    const message = `Deleting customer: ${id}, user: ${user.username} (${user.id})`;
     this.logger.log(message);
     try {
-      const client = await this.findOne(id, user);
+      const customer = await this.findOne(id, user);
 
-      if (client.deletedAt !== null)
+      if (customer.deletedAt !== null)
         throw new ConflictException({
           status: HttpStatus.CONFLICT,
-          message: `[ERROR] Client with id ${id} cannot be deleted because it is already deleted`,
+          message: `[ERROR] Customer with id ${id} cannot be deleted because it is already deleted`,
         });
 
-      const deletedClient = await this.prisma.client.update({
+      const deletedCustomer = await this.prisma.customer.update({
         where: { id },
         data: {
           deletedAt: new Date(),
@@ -164,25 +164,25 @@ export class ClientService {
 
       this.clearCache();
 
-      return this.excludeFields(deletedClient);
+      return this.excludeFields(deletedCustomer);
     } catch (error) {
       this.exHandler.process(error);
     }
   }
 
   async restore(id: string, user: CurrentUser) {
-    const message = `Restoring client: ${id}, user: ${user.username} (${user.id})`;
+    const message = `Restoring customer: ${id}, user: ${user.username} (${user.id})`;
     this.logger.log(message);
     try {
-      const client = await this.findOne(id, user);
+      const customer = await this.findOne(id, user);
 
-      if (client.deletedAt === null)
+      if (customer.deletedAt === null)
         throw new ConflictException({
           status: HttpStatus.CONFLICT,
-          message: `[ERROR] Client with id ${id} cannot be restored because it is not deleted`,
+          message: `[ERROR] Customer with id ${id} cannot be restored because it is not deleted`,
         });
 
-      const restoredClient = await this.prisma.client.update({
+      const restoredCustomer = await this.prisma.customer.update({
         where: { id },
         data: {
           deletedAt: null,
@@ -194,7 +194,7 @@ export class ClientService {
 
       this.clearCache();
 
-      return this.excludeFields(restoredClient);
+      return this.excludeFields(restoredCustomer);
     } catch (error) {
       this.exHandler.process(error);
     }
@@ -205,12 +205,12 @@ export class ClientService {
   }
 
   /**
-   * Excludes specified fields from the given Client object.
+   * Excludes specified fields from the given Customer object.
    *
-   * @param data - The Client object from which fields will be excluded.
-   * @returns A new Client object with the specified fields excluded.
+   * @param data - The Customer object from which fields will be excluded.
+   * @returns A new Customer object with the specified fields excluded.
    */
-  private excludeFields(data: Client): Partial<Client> {
-    return ObjectManipulator.exclude<Client>(data, EXCLUDE_FIELDS);
+  private excludeFields(data: Customer): Partial<Customer> {
+    return ObjectManipulator.exclude<Customer>(data, EXCLUDE_FIELDS);
   }
 }

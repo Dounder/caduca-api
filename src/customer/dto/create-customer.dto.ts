@@ -1,6 +1,6 @@
 import { IsNotEmpty, MaxLength } from 'class-validator';
 
-export class CreateClientDto {
+export class CreateCustomerDto {
   @IsNotEmpty()
   @MaxLength(100)
   name: string;
