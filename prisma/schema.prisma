@@ -20,33 +20,37 @@ enum Role {
 }
 
 model User {
-  id                 String        @id() @default(cuid())
-  createdAt          DateTime      @default(now()) @map("created_at")
-  updatedAt          DateTime      @updatedAt() @map("updated_at")
-  deletedAt          DateTime?     @map("deleted_at")
-  createdById        String?       @map("created_by")
-  updatedById        String?       @map("updated_by")
-  deletedById        String?       @map("deleted_by")
-  username           String        @unique() @db.VarChar(20)
-  email              String        @unique() @db.VarChar(50)
-  password           String        @db.VarChar(100)
-  roles              Role[]
-  createdBy          User?         @relation("UserCreator", fields: [createdById], references: [id])
-  creatorOf          User[]        @relation("UserCreator")
-  updatedBy          User?         @relation("UserUpdater", fields: [updatedById], references: [id])
-  updaterOf          User[]        @relation("UserUpdater")
-  deletedBy          User?         @relation("UserDeleter", fields: [deletedById], references: [id])
-  deleterOf          User[]        @relation("UserDeleter")
-  productCreated     Product[]     @relation("ProductCreator")
-  productUpdated     Product[]     @relation("ProductUpdater")
-  productDeleted     Product[]     @relation("ProductDeleter")
-  productCodeCreated ProductCode[] @relation("ProductCodeCreator")
-  productCodeUpdated ProductCode[] @relation("ProductCodeUpdater")
-  productCodeDeleted ProductCode[] @relation("ProductCodeDeleter")
-  customerCreated    Customer[]    @relation("CustomerCreator")
-  customerUpdated    Customer[]    @relation("CustomerUpdater")
-  customerDeleted    Customer[]    @relation("CustomerDeleter")
-  CustomerLogCreator CustomerLog[] @relation("CustomerLogCreator")
+  id                    String           @id() @default(cuid())
+  createdAt             DateTime         @default(now()) @map("created_at")
+  updatedAt             DateTime         @updatedAt() @map("updated_at")
+  deletedAt             DateTime?        @map("deleted_at")
+  createdById           String?          @map("created_by")
+  updatedById           String?          @map("updated_by")
+  deletedById           String?          @map("deleted_by")
+  username              String           @unique() @db.VarChar(20)
+  email                 String           @unique() @db.VarChar(50)
+  password              String           @db.VarChar(100)
+  roles                 Role[]
+  createdBy             User?            @relation("UserCreator", fields: [createdById], references: [id])
+  creatorOf             User[]           @relation("UserCreator")
+  updatedBy             User?            @relation("UserUpdater", fields: [updatedById], references: [id])
+  updaterOf             User[]           @relation("UserUpdater")
+  deletedBy             User?            @relation("UserDeleter", fields: [deletedById], references: [id])
+  deleterOf             User[]           @relation("UserDeleter")
+  productCreated        Product[]        @relation("ProductCreator")
+  productUpdated        Product[]        @relation("ProductUpdater")
+  productDeleted        Product[]        @relation("ProductDeleter")
+  productCodeCreated    ProductCode[]    @relation("ProductCodeCreator")
+  productCodeUpdated    ProductCode[]    @relation("ProductCodeUpdater")
+  productCodeDeleted    ProductCode[]    @relation("ProductCodeDeleter")
+  customerCreated       Customer[]       @relation("CustomerCreator")
+  customerUpdated       Customer[]       @relation("CustomerUpdater")
+  customerDeleted       Customer[]       @relation("CustomerDeleter")
+  CustomerLogCreator    CustomerLog[]    @relation("CustomerLogCreator")
+  salespersonCreated    Salesperson[]    @relation("SalespersonCreator")
+  salespersonUpdated    Salesperson[]    @relation("SalespersonUpdater")
+  salespersonDeleted    Salesperson[]    @relation("SalespersonDeleter")
+  SalespersonLogCreator SalespersonLog[] @relation("SalespersonLogCreator")
 
   @@map("user")
 }
@@ -115,4 +119,34 @@ model CustomerLog {
   createdBy   User?    @relation("CustomerLogCreator", fields: [createdById], references: [id], onDelete: Cascade)
 
   @@map("customer_log")
+}
+
+model Salesperson {
+  id          String           @id() @default(cuid())
+  createdAt   DateTime         @default(now()) @map("created_at")
+  updatedAt   DateTime         @updatedAt() @map("updated_at")
+  deletedAt   DateTime?        @map("deleted_at")
+  createdById String?          @map("created_by")
+  updatedById String?          @map("updated_by")
+  deletedById String?          @map("deleted_by")
+  code        Int              @unique() @default(autoincrement())
+  name        String           @db.VarChar(100)
+  logs        SalespersonLog[]
+  createdBy   User?            @relation("SalespersonCreator", fields: [createdById], references: [id], onDelete: SetNull)
+  updatedBy   User?            @relation("SalespersonUpdater", fields: [updatedById], references: [id], onDelete: SetNull)
+  deletedBy   User?            @relation("SalespersonDeleter", fields: [deletedById], references: [id], onDelete: SetNull)
+
+  @@map("salesperson")
+}
+
+model SalespersonLog {
+  id            String      @id() @default(cuid())
+  message       String
+  createdAt     DateTime    @default(now()) @map("created_at")
+  createdById   String      @map("created_by_id")
+  salespersonId String      @map("salesperson_id")
+  salesperson   Salesperson @relation(fields: [salespersonId], references: [id])
+  createdBy     User?       @relation("SalespersonLogCreator", fields: [createdById], references: [id], onDelete: Cascade)
+
+  @@map("salesperson_log")
 }
