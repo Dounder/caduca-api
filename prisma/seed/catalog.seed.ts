@@ -2,9 +2,10 @@ import { PrismaClient } from '@prisma/client';
 import { ReturnType, VoucherStatus } from '../../src/voucher/interfaces';
 
 interface CatalogSeed {
-  items: { id: number; name: string }[];
+  items: CatalogItem[];
   model: any;
 }
+type CatalogItem = { id: number; name: string };
 
 export const catalogSeed = async (prisma: PrismaClient) => {
   const data: CatalogSeed[] = [
@@ -22,8 +23,6 @@ export const catalogSeed = async (prisma: PrismaClient) => {
     console.error('Error seeding the catalog:', error);
   }
 };
-
-type CatalogItem = { id: number; name: string };
 
 const enumToCatalogItems = (enumObj: object): CatalogItem[] => {
   return Object.entries(enumObj)
