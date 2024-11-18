@@ -51,6 +51,10 @@ model User {
   salespersonUpdated    Salesperson[]    @relation("SalespersonUpdater")
   salespersonDeleted    Salesperson[]    @relation("SalespersonDeleter")
   SalespersonLogCreator SalespersonLog[] @relation("SalespersonLogCreator")
+  voucherCreated        Voucher[]        @relation("VoucherCreator")
+  voucherUpdated        Voucher[]        @relation("VoucherUpdater")
+  voucherDeleted        Voucher[]        @relation("VoucherDeleter")
+  VoucherLogCreator     VoucherLog[]     @relation("VoucherLogCreator")
 
   @@map("user")
 }
@@ -68,6 +72,7 @@ model Product {
   createdBy   User?         @relation("ProductCreator", fields: [createdById], references: [id], onDelete: SetNull)
   updatedBy   User?         @relation("ProductUpdater", fields: [updatedById], references: [id], onDelete: SetNull)
   deletedBy   User?         @relation("ProductDeleter", fields: [deletedById], references: [id], onDelete: SetNull)
+  voucherItem VoucherItem[] @relation("VoucherProduct")
 
   @@map("product")
 }
@@ -90,6 +95,86 @@ model ProductCode {
   @@map("product_code")
 }
 
+model Voucher {
+  id           String            @id() @default(cuid())
+  createdAt    DateTime          @default(now()) @map("created_at")
+  updatedAt    DateTime          @updatedAt() @map("updated_at")
+  deletedAt    DateTime?         @map("deleted_at")
+  createdById  String?           @map("created_by")
+  updatedById  String?           @map("updated_by")
+  deletedById  String?           @map("deleted_by")
+  number       Int               @unique() @default(autoincrement())
+  approvedDate DateTime?         @map("approved_date")
+  rejectedDate DateTime?         @map("rejected_date")
+  customerId   String
+  Customer     Customer          @relation("VoucherCustomer", fields: [customerId], references: [id])
+  returnTypeId Int
+  ReturnType   VoucherReturnType @relation("VoucherReturnType", fields: [returnTypeId], references: [id])
+  statusId     Int
+  Status       VoucherStatus     @relation("VoucherStatus", fields: [statusId], references: [id])
+  createdBy    User?             @relation("VoucherCreator", fields: [createdById], references: [id], onDelete: SetNull)
+  updatedBy    User?             @relation("VoucherUpdater", fields: [updatedById], references: [id], onDelete: SetNull)
+  deletedBy    User?             @relation("VoucherDeleter", fields: [deletedById], references: [id], onDelete: SetNull)
+  items        VoucherItem[]
+  logs         VoucherLog[]      @relation("VoucherLog")
+
+  @@map("voucher")
+}
+
+model VoucherItem {
+  id             String    @id() @default(cuid())
+  createdAt      DateTime  @default(now()) @map("created_at")
+  updatedAt      DateTime  @updatedAt() @map("updated_at")
+  deletedAt      DateTime? @map("deleted_at")
+  createdById    String?   @map("created_by")
+  updatedById    String?   @map("updated_by")
+  deletedById    String?   @map("deleted_by")
+  quantity       Int       @default(0)
+  expirationDate DateTime? @map("expiration_date")
+  observation    String?   @default("") @db.Text()
+  received       Boolean   @default(false)
+  productId      String
+  Product        Product   @relation("VoucherProduct", fields: [productId], references: [id])
+  voucherId      String
+  Voucher        Voucher   @relation(fields: [voucherId], references: [id])
+
+  @@index([productId], name: "voucher_item_product_id")
+  @@map("voucher_item")
+}
+
+model VoucherLog {
+  id          String   @id() @default(cuid())
+  message     String
+  createdAt   DateTime @default(now()) @map("created_at")
+  createdById String   @map("created_by_id")
+  voucherId   String
+  Voucher     Voucher  @relation("VoucherLog", fields: [voucherId], references: [id])
+  userId      String
+  User        User     @relation("VoucherLogCreator", fields: [userId], references: [id])
+
+  @@map("voucher_log")
+}
+
+model VoucherReturnType {
+  id        Int       @id() @default(autoincrement())
+  name      String    @db.VarChar(255)
+  isActive  Boolean   @default(true) @map("is_active")
+  createdAt DateTime  @default(now()) @map("created_at")
+  Vouchers  Voucher[] @relation("VoucherReturnType")
+
+  @@map("voucher_return_type")
+}
+
+model VoucherStatus {
+  id        Int       @id() @default(autoincrement())
+  name      String    @db.VarChar(255)
+  isActive  Boolean   @default(true) @map("is_active")
+  createdAt DateTime  @default(now()) @map("created_at")
+  Vouchers  Voucher[] @relation("VoucherStatus")
+
+  @@map("voucher_status")
+}
+
 model Customer {
   id          String        @id() @default(cuid())
   createdAt   DateTime      @default(now()) @map("created_at")
@@ -105,6 +190,7 @@ model Customer {
   createdBy   User?         @relation("CustomerCreator", fields: [createdById], references: [id], onDelete: SetNull)
   updatedBy   User?         @relation("CustomerUpdater", fields: [updatedById], references: [id], onDelete: SetNull)
   deletedBy   User?         @relation("CustomerDeleter", fields: [deletedById], references: [id], onDelete: SetNull)
+  Vouchers    Voucher[]     @relation("VoucherCustomer")
 
   @@map("customer")
 }
