@@ -10,13 +10,13 @@ model Voucher extends Base {
   rejectedDate DateTime?         @map('rejected_date')
 
   customerId   String
-  Customer     Customer          @relation('VoucherCustomer', fields: [customerId], references: [id])
+  customer     Customer          @relation('VoucherCustomer', fields: [customerId], references: [id])
 
   returnTypeId Int
-  ReturnType   VoucherReturnType @relation('VoucherReturnType', fields: [returnTypeId], references: [id])
+  returnType   VoucherReturnType @relation('VoucherReturnType', fields: [returnTypeId], references: [id])
 
   statusId     Int
-  Status       VoucherStatus     @relation('VoucherStatus', fields: [statusId], references: [id])
+  status       VoucherStatus     @relation('VoucherStatus', fields: [statusId], references: [id])
 
   createdBy    User?             @relation('VoucherCreator', fields: [createdById], references: [id], onDelete: SetNull)
   updatedBy    User?             @relation('VoucherUpdater', fields: [updatedById], references: [id], onDelete: SetNull)
@@ -45,17 +45,16 @@ model VoucherItem extends Base {
 model VoucherLog extends BaseLog {
   @@map('voucher_log')
   voucherId String
-  Voucher   Voucher @relation('VoucherLog', fields: [voucherId], references: [id])
-  userId    String
-  User      User    @relation('VoucherLogCreator', fields: [userId], references: [id])
+  voucher   Voucher @relation('VoucherLog', fields: [voucherId], references: [id])
+  createdBy User    @relation('VoucherLogCreator', fields: [createdById], references: [id])
 }
 
 model VoucherReturnType extends BaseCatalog {
   @@map('voucher_return_type')
-  Vouchers Voucher[] @relation('VoucherReturnType')
+  vouchers Voucher[] @relation('VoucherReturnType')
 }
 
 model VoucherStatus extends BaseCatalog {
   @@map('voucher_status')
-  Vouchers Voucher[] @relation('VoucherStatus')
+  vouchers Voucher[] @relation('VoucherStatus')
 }

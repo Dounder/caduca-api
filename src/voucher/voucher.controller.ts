@@ -1,15 +1,20 @@
-import { Controller, Get, Post, Body, Patch, Param, Delete } from '@nestjs/common';
-import { VoucherService } from './voucher.service';
-import { CreateVoucherDto, UpdateVoucherDto } from './dto';
+import { Body, Controller, Delete, Get, Param, Patch, Post, Query } from '@nestjs/common';
+
+import { Auth, GetUser } from 'src/auth';
 import { ParseCuidPipe } from 'src/common';
+import { CurrentUser, Role } from 'src/user';
+import { CreateVoucherDto } from './dto';
+import { VoucherStatus } from './interfaces';
+import { VoucherService } from './voucher.service';
 
 @Controller('voucher')
+@Auth(Role.Admin, Role.Manager, Role.Developer)
 export class VoucherController {
   constructor(private readonly voucherService: VoucherService) {}
 
   @Post()
-  create(@Body() createVoucherDto: CreateVoucherDto) {
-    return this.voucherService.create(createVoucherDto);
+  create(@Body() createVoucherDto: CreateVoucherDto, @GetUser() user: CurrentUser) {
+    return this.voucherService.create(createVoucherDto, user);
   }
 
   @Get()
@@ -22,9 +27,9 @@ export class VoucherController {
     return this.voucherService.findOne(id);
   }
 
-  @Patch(':id')
-  update(@Param('id', ParseCuidPipe) id: string, @Body() updateVoucherDto: UpdateVoucherDto) {
-    return this.voucherService.update(id, updateVoucherDto);
+  @Patch(':id/status')
+  updateStatus(@Param('id', ParseCuidPipe) id: string, @Query('status') status: VoucherStatus) {
+    return this.voucherService.updateStatus(id, status);
   }
 
   @Delete(':id')
