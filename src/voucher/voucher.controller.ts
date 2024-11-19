@@ -1,7 +1,7 @@
 import { Body, Controller, Delete, Get, Param, Patch, Post, Query } from '@nestjs/common';
 
 import { Auth, GetUser } from 'src/auth';
-import { ParseCuidPipe } from 'src/common';
+import { PaginationDto, ParseCuidPipe } from 'src/common';
 import { CurrentUser, Role } from 'src/user';
 import { CreateVoucherDto } from './dto';
 import { VoucherStatus } from './interfaces';
@@ -18,13 +18,13 @@ export class VoucherController {
   }
 
   @Get()
-  findAll() {
-    return this.voucherService.findAll();
+  findAll(@Query() pagination: PaginationDto, @GetUser() user: CurrentUser) {
+    return this.voucherService.findAll(pagination, user);
   }
 
   @Get(':id')
-  findOne(@Param('id', ParseCuidPipe) id: string) {
-    return this.voucherService.findOne(id);
+  findOne(@Param('id', ParseCuidPipe) id: string, @GetUser() user: CurrentUser) {
+    return this.voucherService.findOne(id, user);
   }
 
   @Patch(':id/status')

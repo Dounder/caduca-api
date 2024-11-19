@@ -1,31 +1,12 @@
-import { Injectable, Logger } from '@nestjs/common';
+import { HttpStatus, Injectable, Logger, NotFoundException } from '@nestjs/common';
 
-import { Voucher } from '@prisma/client';
-import { ExceptionHandler, ObjectManipulator } from 'src/helpers';
+import { PaginationDto } from 'src/common';
+import { ExceptionHandler, hasRoles } from 'src/helpers';
 import { PrismaService } from 'src/prisma/prisma.service';
-import { CurrentUser } from 'src/user';
+import { CurrentUser, Role } from 'src/user';
 import { CreateVoucherDto } from './dto';
+import { VOUCHER_SELECT_LIST, VOUCHER_SELECT_SINGLE } from './helpers';
 import { VoucherStatus } from './interfaces';
-
-const EXCLUDE_FIELDS: (keyof Voucher)[] = [
-  'createdById',
-  'updatedById',
-  'deletedById',
-  'returnTypeId',
-  'statusId',
-  'customerId',
-];
-const INCLUDE_LIST = {
-  createdBy: { select: { id: true, username: true, email: true } },
-  customer: { select: { id: true, name: true } },
-  status: { select: { id: true, name: true } },
-  returnType: { select: { id: true, name: true } },
-};
-const INCLUDE_SINGLE = {
-  ...INCLUDE_LIST,
-  updatedBy: { select: { id: true, username: true, email: true } },
-  deletedBy: { select: { id: true, username: true, email: true } },
-};
 
 @Injectable()
 export class VoucherService {
@@ -44,21 +25,56 @@ export class VoucherService {
           createdById: user.id,
           logs: { create: { message, createdBy: { connect: { id: user.id } } } },
         },
-        include: INCLUDE_SINGLE,
+        select: VOUCHER_SELECT_SINGLE,
       });
 
-      return this.excludeFields(voucher);
+      return voucher;
     } catch (error) {
       this.exHandler.process(error);
     }
   }
 
-  findAll() {
-    return `This action returns all voucher`;
+  async findAll(pagination: PaginationDto, user: CurrentUser) {
+    const { page, limit } = pagination;
+    const isAdmin = hasRoles(user.roles, [Role.Admin]);
+    const where = isAdmin ? {} : { deletedAt: null };
+
+    const [data, total] = await this.prisma.$transaction([
+      this.prisma.voucher.findMany({
+        take: limit,
+        skip: (page - 1) * limit,
+        where,
+        select: VOUCHER_SELECT_LIST,
+      }),
+      this.prisma.voucher.count({ where }),
+    ]);
+
+    const lastPage = Math.ceil(total / limit);
+
+    return { meta: { total, page, lastPage }, data };
   }
 
-  findOne(id: string) {
-    return `This action returns a #${id} voucher`;
+  async findOne(id: string, user: CurrentUser) {
+    this.logger.log(`Fetching voucher: ${id}, user: ${user.username} (${user.id})`);
+    try {
+      const isAdmin = hasRoles(user.roles, [Role.Admin]);
+      const where = isAdmin ? { id } : { id, deletedAt: null };
+
+      const voucher = await this.prisma.voucher.findFirst({
+        where,
+        select: VOUCHER_SELECT_SINGLE,
+      });
+
+      if (!voucher)
+        throw new NotFoundException({
+          status: HttpStatus.NOT_FOUND,
+          message: `[ERROR] Voucher with id ${id} not found`,
+        });
+
+      return voucher;
+    } catch (error) {
+      this.exHandler.process(error);
+    }
   }
 
   updateStatus(id: string, status: VoucherStatus) {
@@ -71,9 +87,5 @@ export class VoucherService {
 
   restore(id: string) {
     return `This action restores a #${id} voucher`;
-  }
-
-  private excludeFields(item: Voucher): Partial<Voucher> {
-    return ObjectManipulator.exclude<Voucher>(item, EXCLUDE_FIELDS);
   }
 }
