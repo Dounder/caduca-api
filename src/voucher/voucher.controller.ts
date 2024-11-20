@@ -33,12 +33,12 @@ export class VoucherController {
   }
 
   @Delete(':id')
-  remove(@Param('id', ParseCuidPipe) id: string) {
-    return this.voucherService.remove(id);
+  remove(@Param('id', ParseCuidPipe) id: string, @GetUser() user: CurrentUser) {
+    return this.voucherService.remove(id, user);
   }
 
   @Patch(':id/restore')
-  restore(@Param('id', ParseCuidPipe) id: string) {
-    return this.voucherService.restore(id);
+  restore(@Param('id', ParseCuidPipe) id: string, @GetUser() user: CurrentUser) {
+    return this.voucherService.restore(id, user);
   }
 }

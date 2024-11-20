@@ -1,4 +1,4 @@
-import { HttpStatus, Injectable, Logger, NotFoundException } from '@nestjs/common';
+import { ConflictException, HttpStatus, Injectable, Logger, NotFoundException } from '@nestjs/common';
 
 import { PaginationDto } from 'src/common';
 import { ExceptionHandler, hasRoles } from 'src/helpers';
@@ -81,11 +81,57 @@ export class VoucherService {
     return `This action update the status of a #${id} voucher with status ${status}`;
   }
 
-  remove(id: string) {
-    return `This action removes a #${id} voucher`;
+  async remove(id: string, user: CurrentUser) {
+    const message = `Deleting voucher: ${id}, user: ${user.username} (${user.id})`;
+    this.logger.log(message);
+    try {
+      const voucher = await this.findOne(id, user);
+
+      if (voucher.deletedAt) {
+        throw new ConflictException({
+          status: HttpStatus.CONFLICT,
+          message: `[ERROR] Voucher with id ${id} cannot be deleted`,
+        });
+      }
+
+      return await this.prisma.voucher.update({
+        where: { id },
+        data: {
+          deletedAt: new Date(),
+          deletedBy: { connect: { id: user.id } },
+          logs: { create: { message, createdBy: { connect: { id: user.id } } } },
+        },
+        select: VOUCHER_SELECT_SINGLE,
+      });
+    } catch (error) {
+      this.exHandler.process(error);
+    }
   }
 
-  restore(id: string) {
-    return `This action restores a #${id} voucher`;
+  async restore(id: string, user: CurrentUser) {
+    const message = `Restoring voucher: ${id}, user: ${user.username} (${user.id})`;
+    this.logger.log(message);
+    try {
+      const voucher = await this.findOne(id, user);
+
+      if (!voucher.deletedAt) {
+        throw new ConflictException({
+          status: HttpStatus.CONFLICT,
+          message: `[ERROR] Voucher with id ${id} cannot be restored`,
+        });
+      }
+
+      return await this.prisma.voucher.update({
+        where: { id },
+        data: {
+          deletedAt: null,
+          deletedBy: { disconnect: { id: user.id } },
+          logs: { create: { message, createdBy: { connect: { id: user.id } } } },
+        },
+        select: VOUCHER_SELECT_SINGLE,
+      });
+    } catch (error) {
+      this.exHandler.process(error);
+    }
   }
 }
