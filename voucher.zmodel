@@ -28,18 +28,18 @@ model Voucher extends Base {
 
 model VoucherItem extends Base {
   @@map('voucher_item')
-  quantity       Int       @default(0)
-  expirationDate DateTime? @map('expiration_date')
-  observation    String?   @default("") @db.Text
-  received       Boolean   @default(false)
+  quantity       Int         @default(0)
+  expirationDate DateTime?   @map('expiration_date')
+  observation    String?     @default("") @db.Text
+  received       Boolean     @default(false)
 
-  productId      String
-  Product        Product   @relation('VoucherProduct', fields: [productId], references: [id])
+  productCodeId  String
+  productCode    ProductCode @relation('VoucherProductCode', fields: [productCodeId], references: [id])
 
   voucherId      String
-  Voucher        Voucher   @relation(fields: [voucherId], references: [id])
+  Voucher        Voucher     @relation(fields: [voucherId], references: [id])
 
-  @@index([productId], name: "voucher_item_product_id")
+  @@index([productCodeId, voucherId])
 }
 
 model VoucherLog extends BaseLog {
