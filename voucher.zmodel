@@ -1,0 +1,60 @@
+import 'base'
+import 'user'
+import 'customer'
+import 'product'
+
+model Voucher extends Base {
+  @@map('voucher')
+  number       Int               @unique @default(autoincrement())
+  approvedDate DateTime?         @map('approved_date')
+  rejectedDate DateTime?         @map('rejected_date')
+
+  customerId   String
+  customer     Customer          @relation('VoucherCustomer', fields: [customerId], references: [id])
+
+  returnTypeId Int
+  returnType   VoucherReturnType @relation('VoucherReturnType', fields: [returnTypeId], references: [id])
+
+  statusId     Int
+  status       VoucherStatus     @relation('VoucherStatus', fields: [statusId], references: [id])
+
+  createdBy    User?             @relation('VoucherCreator', fields: [createdById], references: [id], onDelete: SetNull)
+  updatedBy    User?             @relation('VoucherUpdater', fields: [updatedById], references: [id], onDelete: SetNull)
+  deletedBy    User?             @relation('VoucherDeleter', fields: [deletedById], references: [id], onDelete: SetNull)
+
+  items        VoucherItem[]
+  logs         VoucherLog[]      @relation('VoucherLog')
+}
+
+model VoucherItem extends Base {
+  @@map('voucher_item')
+  quantity       Int       @default(0)
+  expirationDate DateTime? @map('expiration_date')
+  observation    String?   @default("") @db.Text
+  received       Boolean   @default(false)
+
+  productId      String
+  Product        Product   @relation('VoucherProduct', fields: [productId], references: [id])
+
+  voucherId      String
+  Voucher        Voucher   @relation(fields: [voucherId], references: [id])
+
+  @@index([productId], name: "voucher_item_product_id")
+}
+
+model VoucherLog extends BaseLog {
+  @@map('voucher_log')
+  voucherId String
+  voucher   Voucher @relation('VoucherLog', fields: [voucherId], references: [id])
+  createdBy User    @relation('VoucherLogCreator', fields: [createdById], references: [id])
+}
+
+model VoucherReturnType extends BaseCatalog {
+  @@map('voucher_return_type')
+  vouchers Voucher[] @relation('VoucherReturnType')
+}
+
+model VoucherStatus extends BaseCatalog {
+  @@map('voucher_status')
+  vouchers Voucher[] @relation('VoucherStatus')
+}

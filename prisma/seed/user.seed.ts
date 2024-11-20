@@ -1,9 +1,8 @@
+import { PrismaClient } from '@prisma/client';
 import * as bcrypt from 'bcrypt';
-import { PrismaClient, Role } from '@prisma/client';
+import { Role } from '../../src/user';
 
-const prisma = new PrismaClient();
-
-const main = async () => {
+export const userSeed = async (prisma: PrismaClient) => {
   await prisma.user.upsert({
     where: { id: 'cm2t3swzl000d0cjw07z1dthj' },
     update: {
@@ -66,13 +65,3 @@ const main = async () => {
     },
   });
 };
-
-main()
-  .finally(async () => {
-    await prisma.$disconnect();
-  })
-  .catch(async (e) => {
-    console.error(e);
-    await prisma.$disconnect();
-    process.exit(1);
-  });

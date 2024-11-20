@@ -1,14 +1,18 @@
 import 'base'
 import 'user'
+import 'voucher'
 
 model Product extends Base {
   @@map('product')
-  name      String
-  codes     ProductCode[]
+  name        String
+  codes       ProductCode[]
 
-  createdBy User?         @relation("ProductCreator", fields: [createdById], references: [id], onDelete: SetNull)
-  updatedBy User?         @relation("ProductUpdater", fields: [updatedById], references: [id], onDelete: SetNull)
-  deletedBy User?         @relation("ProductDeleter", fields: [deletedById], references: [id], onDelete: SetNull)
+  createdBy   User?         @relation("ProductCreator", fields: [createdById], references: [id], onDelete: SetNull)
+  updatedBy   User?         @relation("ProductUpdater", fields: [updatedById], references: [id], onDelete: SetNull)
+  deletedBy   User?         @relation("ProductDeleter", fields: [deletedById], references: [id], onDelete: SetNull)
+
+
+  voucherItem VoucherItem[] @relation('VoucherProduct')
 }
 
 model ProductCode extends Base {

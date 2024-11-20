@@ -1,5 +1,6 @@
 import 'base'
 import 'user'
+import 'voucher'
 
 model Customer extends Base {
   @@map('customer')
@@ -12,6 +13,8 @@ model Customer extends Base {
   createdBy User?         @relation('CustomerCreator', fields: [createdById], references: [id], onDelete: SetNull)
   updatedBy User?         @relation('CustomerUpdater', fields: [updatedById], references: [id], onDelete: SetNull)
   deletedBy User?         @relation('CustomerDeleter', fields: [deletedById], references: [id], onDelete: SetNull)
+
+  Vouchers  Voucher[]     @relation('VoucherCustomer')
 }
 
 model CustomerLog extends BaseLog {

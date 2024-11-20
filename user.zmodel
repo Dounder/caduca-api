@@ -2,6 +2,7 @@ import 'base'
 import 'product'
 import 'customer'
 import 'salesperson'
+import 'voucher'
 
 enum Role {
   Admin
@@ -42,4 +43,9 @@ model User extends Base {
   salespersonUpdated    Salesperson[]    @relation("SalespersonUpdater")
   salespersonDeleted    Salesperson[]    @relation("SalespersonDeleter")
   SalespersonLogCreator SalespersonLog[] @relation("SalespersonLogCreator")
+
+  voucherCreated        Voucher[]        @relation("VoucherCreator")
+  voucherUpdated        Voucher[]        @relation("VoucherUpdater")
+  voucherDeleted        Voucher[]        @relation("VoucherDeleter")
+  VoucherLogCreator     VoucherLog[]     @relation("VoucherLogCreator")
 }

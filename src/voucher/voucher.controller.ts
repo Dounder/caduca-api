@@ -1,0 +1,48 @@
+import { Body, Controller, Delete, Get, Param, Patch, Post, Query } from '@nestjs/common';
+
+import { Auth, GetUser } from 'src/auth';
+import { PaginationDto, ParseCuidPipe } from 'src/common';
+import { CurrentUser, Role } from 'src/user';
+import { CreateVoucherDto, UpdateVoucherStatusDto } from './dto';
+import { VoucherService } from './voucher.service';
+
+@Controller('voucher')
+@Auth(Role.Admin, Role.Manager, Role.Developer)
+export class VoucherController {
+  constructor(private readonly voucherService: VoucherService) {}
+
+  @Post()
+  create(@Body() createVoucherDto: CreateVoucherDto, @GetUser() user: CurrentUser) {
+    return this.voucherService.create(createVoucherDto, user);
+  }
+
+  @Get()
+  findAll(@Query() pagination: PaginationDto, @GetUser() user: CurrentUser) {
+    return this.voucherService.findAll(pagination, user);
+  }
+
+  @Get(':id')
+  findOne(@Param('id', ParseCuidPipe) id: string, @GetUser() user: CurrentUser) {
+    return this.voucherService.findOne(id, user);
+  }
+
+  @Patch(':id/status')
+  updateStatus(
+    @Param('id', ParseCuidPipe) id: string,
+    @Body() updateStatusDto: UpdateVoucherStatusDto,
+    @GetUser() user: CurrentUser,
+  ) {
+    const { status } = updateStatusDto;
+    return this.voucherService.updateStatus(id, status, user);
+  }
+
+  @Delete(':id')
+  remove(@Param('id', ParseCuidPipe) id: string, @GetUser() user: CurrentUser) {
+    return this.voucherService.remove(id, user);
+  }
+
+  @Patch(':id/restore')
+  restore(@Param('id', ParseCuidPipe) id: string, @GetUser() user: CurrentUser) {
+    return this.voucherService.restore(id, user);
+  }
+}
