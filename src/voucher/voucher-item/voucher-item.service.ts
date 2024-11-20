@@ -1,9 +1,10 @@
 import { Injectable, Logger } from '@nestjs/common';
 
-import { ExceptionHandler } from 'src/helpers';
+import { PaginationDto } from 'src/common';
+import { ExceptionHandler, hasRoles } from 'src/helpers';
 import { PrismaService } from 'src/prisma/prisma.service';
+import { CurrentUser, Role } from 'src/user';
 import { CreateVoucherItemDto, UpdateVoucherItemDto } from './dto';
-import { CurrentUser } from 'src/user';
 import { VOUCHER_ITEM_SINGLE } from './helpers';
 
 @Injectable()
@@ -40,8 +41,24 @@ export class VoucherItemService {
     }
   }
 
-  findAll() {
-    return `This action returns all voucherItem`;
+  async findAll(pagination: PaginationDto, user: CurrentUser) {
+    const { page, limit } = pagination;
+    const isAdmin = hasRoles(user.roles, [Role.Admin]);
+    const where = isAdmin ? {} : { deletedAt: null };
+
+    const [data, total] = await this.prisma.$transaction([
+      this.prisma.voucherItem.findMany({
+        take: limit,
+        skip: (page - 1) * limit,
+        where,
+        select: VOUCHER_ITEM_SINGLE,
+      }),
+      this.prisma.voucherItem.count({ where }),
+    ]);
+
+    const lastPage = Math.ceil(total / limit);
+
+    return { meta: { total, page, lastPage }, data };
   }
 
   findOne(id: number) {
