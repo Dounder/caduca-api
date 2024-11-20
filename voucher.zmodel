@@ -39,6 +39,10 @@ model VoucherItem extends Base {
   voucherId      String
   Voucher        Voucher     @relation(fields: [voucherId], references: [id])
 
+  createdBy      User?       @relation('VoucherItemCreator', fields: [createdById], references: [id], onDelete: SetNull)
+  updatedBy      User?       @relation('VoucherItemUpdater', fields: [updatedById], references: [id], onDelete: SetNull)
+  deletedBy      User?       @relation('VoucherItemDeleter', fields: [deletedById], references: [id], onDelete: SetNull)
+
   @@index([productCodeId, voucherId])
 }
 

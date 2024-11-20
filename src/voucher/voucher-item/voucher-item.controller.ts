@@ -1,15 +1,17 @@
 import { Controller, Get, Post, Body, Patch, Param, Delete } from '@nestjs/common';
 import { VoucherItemService } from './voucher-item.service';
-import { CreateVoucherItemDto } from './dto/create-voucher-item.dto';
-import { UpdateVoucherItemDto } from './dto/update-voucher-item.dto';
+import { CreateVoucherItemDto, UpdateVoucherItemDto } from './dto';
+import { Auth, GetUser } from 'src/auth';
+import { CurrentUser } from 'src/user';
 
 @Controller('voucher/item')
+@Auth()
 export class VoucherItemController {
   constructor(private readonly voucherItemService: VoucherItemService) {}
 
   @Post()
-  create(@Body() createVoucherItemDto: CreateVoucherItemDto) {
-    return this.voucherItemService.create(createVoucherItemDto);
+  create(@Body() createVoucherItemDto: CreateVoucherItemDto, @GetUser() user: CurrentUser) {
+    return this.voucherItemService.create(createVoucherItemDto, user);
   }
 
   @Get()

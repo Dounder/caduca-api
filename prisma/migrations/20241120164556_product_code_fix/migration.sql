@@ -20,3 +20,12 @@ CREATE INDEX "voucher_item_productCodeId_voucherId_idx" ON "voucher_item"("produ
 
 -- AddForeignKey
 ALTER TABLE "voucher_item" ADD CONSTRAINT "voucher_item_productCodeId_fkey" FOREIGN KEY ("productCodeId") REFERENCES "product_code"("id") ON DELETE RESTRICT ON UPDATE CASCADE;
+
+-- AddForeignKey
+ALTER TABLE "voucher_item" ADD CONSTRAINT "voucher_item_created_by_fkey" FOREIGN KEY ("created_by") REFERENCES "user"("id") ON DELETE SET NULL ON UPDATE CASCADE;
+
+-- AddForeignKey
+ALTER TABLE "voucher_item" ADD CONSTRAINT "voucher_item_updated_by_fkey" FOREIGN KEY ("updated_by") REFERENCES "user"("id") ON DELETE SET NULL ON UPDATE CASCADE;
+
+-- AddForeignKey
+ALTER TABLE "voucher_item" ADD CONSTRAINT "voucher_item_deleted_by_fkey" FOREIGN KEY ("deleted_by") REFERENCES "user"("id") ON DELETE SET NULL ON UPDATE CASCADE;

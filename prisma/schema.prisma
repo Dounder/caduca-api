@@ -54,7 +54,10 @@ model User {
   voucherCreated        Voucher[]        @relation("VoucherCreator")
   voucherUpdated        Voucher[]        @relation("VoucherUpdater")
   voucherDeleted        Voucher[]        @relation("VoucherDeleter")
-  VoucherLogCreator     VoucherLog[]     @relation("VoucherLogCreator")
+  voucherLogCreator     VoucherLog[]     @relation("VoucherLogCreator")
+  voucherItemCreated    VoucherItem[]    @relation("VoucherItemCreator")
+  voucherItemUpdated    VoucherItem[]    @relation("VoucherItemUpdater")
+  voucherItemDeleted    VoucherItem[]    @relation("VoucherItemDeleter")
 
   @@map("user")
 }
@@ -137,6 +140,9 @@ model VoucherItem {
   productCode    ProductCode @relation("VoucherProductCode", fields: [productCodeId], references: [id])
   voucherId      String
   Voucher        Voucher     @relation(fields: [voucherId], references: [id])
+  createdBy      User?       @relation("VoucherItemCreator", fields: [createdById], references: [id], onDelete: SetNull)
+  updatedBy      User?       @relation("VoucherItemUpdater", fields: [updatedById], references: [id], onDelete: SetNull)
+  deletedBy      User?       @relation("VoucherItemDeleter", fields: [deletedById], references: [id], onDelete: SetNull)
 
   @@index([productCodeId, voucherId])
   @@map("voucher_item")
