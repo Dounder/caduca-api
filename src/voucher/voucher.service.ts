@@ -5,7 +5,7 @@ import { ExceptionHandler, hasRoles } from 'src/helpers';
 import { PrismaService } from 'src/prisma/prisma.service';
 import { CurrentUser, Role } from 'src/user';
 import { CreateVoucherDto } from './dto';
-import { VOUCHER_SELECT_LIST, VOUCHER_SELECT_SINGLE } from './helpers';
+import { validateVoucherStatusChange, VOUCHER_SELECT_LIST, VOUCHER_SELECT_SINGLE } from './helpers';
 import { VoucherStatus } from './interfaces';
 
 @Injectable()
@@ -77,8 +77,32 @@ export class VoucherService {
     }
   }
 
-  updateStatus(id: string, status: VoucherStatus) {
-    return `This action update the status of a #${id} voucher with status ${status}`;
+  async updateStatus(id: string, status: VoucherStatus, user: CurrentUser) {
+    this.logger.log(`Updating voucher status: ${id}, status: ${status}`);
+    try {
+      const voucher = await this.findOne(id, user);
+      const oldStatus = voucher.status.id as VoucherStatus;
+      const isValidChange = validateVoucherStatusChange(oldStatus, status);
+
+      if (!isValidChange) {
+        throw new ConflictException({
+          status: HttpStatus.CONFLICT,
+          message: `[ERROR] Invalid status change from ${VoucherStatus[oldStatus]} (${oldStatus}) to ${VoucherStatus[status]} (${status})`,
+        });
+      }
+
+      const message = `Change status from ${VoucherStatus[oldStatus]} (${oldStatus}) to ${VoucherStatus[status]} (${status}), user: ${user.username} (${user.id})`;
+      return await this.prisma.voucher.update({
+        where: { id },
+        data: {
+          status: { connect: { id: status } },
+          logs: { create: { message, createdBy: { connect: { id: user.id } } } },
+        },
+        select: VOUCHER_SELECT_SINGLE,
+      });
+    } catch (error) {
+      this.exHandler.process(error);
+    }
   }
 
   async remove(id: string, user: CurrentUser) {

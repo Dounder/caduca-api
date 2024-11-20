@@ -13,7 +13,7 @@ const validStatusChanges: Record<VoucherStatus, Set<VoucherStatus>> = {
   [VoucherStatus.Rejected]: new Set(),
 };
 
-export const validateStatusChange = (status: VoucherStatus, newStatus: VoucherStatus): boolean => {
+export const validateVoucherStatusChange = (status: VoucherStatus, newStatus: VoucherStatus): boolean => {
   logger.log(`Validating status change from ${status} to ${newStatus}`);
   const validNextStatuses = validStatusChanges[status];
 

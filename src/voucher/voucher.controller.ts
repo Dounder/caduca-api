@@ -3,8 +3,7 @@ import { Body, Controller, Delete, Get, Param, Patch, Post, Query } from '@nestj
 import { Auth, GetUser } from 'src/auth';
 import { PaginationDto, ParseCuidPipe } from 'src/common';
 import { CurrentUser, Role } from 'src/user';
-import { CreateVoucherDto } from './dto';
-import { VoucherStatus } from './interfaces';
+import { CreateVoucherDto, UpdateVoucherStatusDto } from './dto';
 import { VoucherService } from './voucher.service';
 
 @Controller('voucher')
@@ -28,8 +27,13 @@ export class VoucherController {
   }
 
   @Patch(':id/status')
-  updateStatus(@Param('id', ParseCuidPipe) id: string, @Query('status') status: VoucherStatus) {
-    return this.voucherService.updateStatus(id, status);
+  updateStatus(
+    @Param('id', ParseCuidPipe) id: string,
+    @Body() updateStatusDto: UpdateVoucherStatusDto,
+    @GetUser() user: CurrentUser,
+  ) {
+    const { status } = updateStatusDto;
+    return this.voucherService.updateStatus(id, status, user);
   }
 
   @Delete(':id')
