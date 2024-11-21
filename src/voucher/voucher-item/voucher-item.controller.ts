@@ -1,9 +1,10 @@
-import { Controller, Get, Post, Body, Patch, Param, Delete, Query } from '@nestjs/common';
-import { VoucherItemService } from './voucher-item.service';
-import { CreateVoucherItemDto, UpdateVoucherItemDto } from './dto';
+import { Body, Controller, Get, Param, Patch, Post, Query } from '@nestjs/common';
+
 import { Auth, GetUser } from 'src/auth';
+import { PaginationDto, ParseCuidPipe } from 'src/common';
 import { CurrentUser } from 'src/user';
-import { PaginationDto } from 'src/common';
+import { CreateVoucherItemDto, UpdateVoucherItemDto } from './dto';
+import { VoucherItemService } from './voucher-item.service';
 
 @Controller('voucher/item')
 @Auth()
@@ -20,18 +21,8 @@ export class VoucherItemController {
     return this.voucherItemService.findAll(pagination, user);
   }
 
-  @Get(':id')
-  findOne(@Param('id') id: string) {
-    return this.voucherItemService.findOne(+id);
-  }
-
-  @Patch(':id')
-  update(@Param('id') id: string, @Body() updateVoucherItemDto: UpdateVoucherItemDto) {
-    return this.voucherItemService.update(+id, updateVoucherItemDto);
-  }
-
-  @Delete(':id')
-  remove(@Param('id') id: string) {
-    return this.voucherItemService.remove(+id);
+  @Patch()
+  update(@Body() updateVoucherItemDto: UpdateVoucherItemDto, @GetUser() user: CurrentUser) {
+    return this.voucherItemService.update(updateVoucherItemDto, user);
   }
 }

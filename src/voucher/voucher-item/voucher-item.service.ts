@@ -1,4 +1,4 @@
-import { Injectable, Logger } from '@nestjs/common';
+import { BadRequestException, HttpStatus, Injectable, Logger } from '@nestjs/common';
 
 import { PaginationDto } from 'src/common';
 import { ExceptionHandler, hasRoles } from 'src/helpers';
@@ -61,15 +61,33 @@ export class VoucherItemService {
     return { meta: { total, page, lastPage }, data };
   }
 
-  findOne(id: number) {
-    return `This action returns a #${id} voucherItem`;
-  }
+  async update(updateVoucherItemDto: UpdateVoucherItemDto, user: CurrentUser) {
+    try {
+      const { voucherId, items } = updateVoucherItemDto;
 
-  update(id: number, updateVoucherItemDto: UpdateVoucherItemDto) {
-    return `This action updates a #${id} voucherItem`;
-  }
+      if (!items || items.length === 0)
+        throw new BadRequestException({ status: HttpStatus.BAD_REQUEST, message: 'Items are required' });
 
-  remove(id: number) {
-    return `This action removes a #${id} voucherItem`;
+      const message = `Updating ${items.length} voucher items for voucher ${voucherId}, user: ${user.username} (${user.id})`;
+      this.logger.log(message, { details: items });
+
+      const itemUpdates = items.map((item) => ({
+        where: { id: item.id },
+        data: { ...item, updatedById: user.id, deletedById: item.deletedAt ? user.id : null },
+        select: VOUCHER_ITEM_SINGLE,
+      }));
+
+      const updatedItems = await this.prisma.$transaction(async (prisma) => {
+        const updated = await Promise.all(itemUpdates.map(prisma.voucherItem.update));
+
+        await prisma.voucherLog.create({ data: { voucherId, message, createdById: user.id } });
+
+        return updated;
+      });
+
+      return updatedItems;
+    } catch (error) {
+      this.exHandler.process(error);
+    }
   }
 }
