@@ -1,11 +1,11 @@
 import { Cache, CACHE_MANAGER } from '@nestjs/cache-manager';
 import { ConflictException, HttpStatus, Inject, Injectable, Logger, NotFoundException } from '@nestjs/common';
-import { Customer, Role } from '@prisma/client';
+import { Customer } from '@prisma/client';
 
 import { ListResponse, PaginationDto } from 'src/common';
 import { ExceptionHandler, hasRoles, ObjectManipulator } from 'src/helpers';
 import { PrismaService } from 'src/prisma/prisma.service';
-import { CurrentUser } from 'src/user';
+import { CurrentUser, Role } from 'src/user';
 import { CreateCustomerDto, UpdateCustomerDto } from './dto';
 
 const EXCLUDE_FIELDS: (keyof Customer)[] = ['createdById', 'updatedById', 'deletedById'];

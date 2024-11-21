@@ -1,10 +1,10 @@
 import { ConflictException, HttpStatus, Injectable, Logger, NotFoundException } from '@nestjs/common';
-import { Prisma, Product, Role } from '@prisma/client';
+import { Prisma, Product } from '@prisma/client';
 
 import { PaginationDto } from 'src/common';
 import { ExceptionHandler, hasRoles, ObjectManipulator } from 'src/helpers';
 import { PrismaService } from 'src/prisma/prisma.service';
-import { CurrentUser } from 'src/user';
+import { CurrentUser, Role } from 'src/user';
 import { CreateProductDto, UpdateProductDto } from './dto';
 
 const EXCLUDE_FIELDS: (keyof Product)[] = ['createdById', 'updatedById', 'deletedById'];

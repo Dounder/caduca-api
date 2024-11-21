@@ -1,4 +1,4 @@
-import { Role } from '@prisma/client';
+import { Role } from 'src/user';
 
 export const hasRoles = (userRoles: Role[], validRoles: Role[]) => {
   return userRoles.some((role) => validRoles.includes(role));

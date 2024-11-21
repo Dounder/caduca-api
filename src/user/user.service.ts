@@ -7,7 +7,7 @@ import {
   Logger,
   NotFoundException,
 } from '@nestjs/common';
-import { User, Role } from '@prisma/client';
+import { User } from '@prisma/client';
 import * as bcrypt from 'bcrypt';
 
 import { Cache, CACHE_MANAGER } from '@nestjs/cache-manager';
@@ -15,7 +15,7 @@ import { ListResponse, PaginationDto } from 'src/common';
 import { ExceptionHandler, hasRoles, ObjectManipulator } from 'src/helpers';
 import { PrismaService } from 'src/prisma/prisma.service';
 import { CreateUserDto, UpdateUserDto } from './dto';
-import { CurrentUser, UserResponse, UserSummary } from './interfaces';
+import { CurrentUser, Role, UserResponse, UserSummary } from './interfaces';
 
 const USER_INCLUDE = {
   createdBy: { select: { id: true, username: true, email: true } },

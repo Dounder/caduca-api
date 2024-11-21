@@ -7,6 +7,7 @@ import { ExceptionHandler, ObjectManipulator } from 'src/helpers';
 import { PrismaService } from 'src/prisma/prisma.service';
 import { LoginDto } from './dto';
 import { AuthResponse, JwtPayload, SignedToken } from './interfaces';
+import { USER_SELECT_SINGLE_PWD } from 'src/user';
 
 @Injectable()
 export class AuthService {
@@ -50,7 +51,10 @@ export class AuthService {
 
       const { id } = ObjectManipulator.exclude(payload, ['exp', 'iat']);
 
-      const user = await this.user.findFirst({ where: { id } });
+      const user = await this.user.findFirst({
+        where: { id },
+        select: USER_SELECT_SINGLE_PWD,
+      });
 
       if (!user) throw new UnauthorizedException({ status: HttpStatus.UNAUTHORIZED, message: 'Invalid token' });
 

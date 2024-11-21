@@ -1,4 +1,4 @@
-import { USER_AUDIT_SELECT } from 'src/common';
+import { USER_AUDIT_SELECT } from 'src/user';
 
 export const PRODUCT_SELECT_SUMMARY = {
   select: {

@@ -1,5 +1,5 @@
 import { Module } from '@nestjs/common';
-import { AuthModule } from 'src/auth';
+import { AuthModule } from 'src/auth/auth.module';
 import { PrismaModule } from 'src/prisma/prisma.module';
 import { VoucherController } from './voucher.controller';
 import { VoucherService } from './voucher.service';

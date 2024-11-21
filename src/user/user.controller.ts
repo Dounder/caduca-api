@@ -1,11 +1,11 @@
 import { Cache, CACHE_MANAGER } from '@nestjs/cache-manager';
 import { Body, Controller, Delete, Get, Inject, Param, Patch, Post, Query } from '@nestjs/common';
-import { Role, User } from '@prisma/client';
+import { User } from '@prisma/client';
 
 import { Auth, GetUser } from 'src/auth';
 import { ListResponse, PaginationDto, ParseCuidPipe } from 'src/common';
 import { CreateUserDto, UpdateUserDto } from './dto';
-import { CurrentUser, UserResponse, UserSummary } from './interfaces';
+import { CurrentUser, Role, UserResponse, UserSummary } from './interfaces';
 import { UserService } from './user.service';
 
 @Controller('user')

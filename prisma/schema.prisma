@@ -12,13 +12,6 @@ generator client {
   provider = "prisma-client-js"
 }
 
-enum Role {
-  Admin
-  Manager
-  Staff
-  Developer
-}
-
 model User {
   id                    String           @id() @default(cuid())
   createdAt             DateTime         @default(now()) @map("created_at")
@@ -30,7 +23,8 @@ model User {
   username              String           @unique() @db.VarChar(20)
   email                 String           @unique() @db.VarChar(50)
   password              String           @db.VarChar(100)
-  roles                 Role[]
+  userRoles             UserRole[]       @relation("UserRoleAssigned")
+  assignedRoles         UserRole[]       @relation("UserRoleAssigner")
   createdBy             User?            @relation("UserCreator", fields: [createdById], references: [id])
   creatorOf             User[]           @relation("UserCreator")
   updatedBy             User?            @relation("UserUpdater", fields: [updatedById], references: [id])
@@ -60,6 +54,29 @@ model User {
   voucherItemDeleted    VoucherItem[]    @relation("VoucherItemDeleter")
 
   @@map("user")
+}
+
+model Role {
+  id          String     @id() @default(cuid())
+  name        String     @unique() @db.VarChar(50)
+  description String?    @db.VarChar(255)
+  userRoles   UserRole[]
+
+  @@map("role")
+}
+
+model UserRole {
+  id           Int      @id() @default(autoincrement())
+  assignedAt   DateTime @default(now())
+  user         User     @relation("UserRoleAssigned", fields: [userId], references: [id], onDelete: Cascade)
+  userId       String
+  role         Role     @relation(fields: [roleId], references: [id], onDelete: Restrict)
+  roleId       String
+  assignedBy   User?    @relation("UserRoleAssigner", fields: [assignedById], references: [id], onDelete: Restrict)
+  assignedById String?
+
+  @@unique([userId, roleId])
+  @@map("user_role")
 }
 
 model Product {

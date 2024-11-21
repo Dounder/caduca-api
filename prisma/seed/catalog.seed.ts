@@ -1,4 +1,5 @@
 import { PrismaClient } from '@prisma/client';
+import { Role } from 'src/user';
 import { ReturnType, VoucherStatus } from '../../src/voucher/interfaces';
 
 interface CatalogSeed {
@@ -19,6 +20,7 @@ export const catalogSeed = async (prisma: PrismaClient) => {
 
   try {
     await prisma.$transaction(upserts);
+    console.log('Catalog seeded successfully');
   } catch (error) {
     console.error('Error seeding the catalog:', error);
   }
