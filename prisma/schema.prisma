@@ -54,7 +54,10 @@ model User {
   voucherCreated        Voucher[]        @relation("VoucherCreator")
   voucherUpdated        Voucher[]        @relation("VoucherUpdater")
   voucherDeleted        Voucher[]        @relation("VoucherDeleter")
-  VoucherLogCreator     VoucherLog[]     @relation("VoucherLogCreator")
+  voucherLogCreator     VoucherLog[]     @relation("VoucherLogCreator")
+  voucherItemCreated    VoucherItem[]    @relation("VoucherItemCreator")
+  voucherItemUpdated    VoucherItem[]    @relation("VoucherItemUpdater")
+  voucherItemDeleted    VoucherItem[]    @relation("VoucherItemDeleter")
 
   @@map("user")
 }
@@ -72,25 +75,25 @@ model Product {
   createdBy   User?         @relation("ProductCreator", fields: [createdById], references: [id], onDelete: SetNull)
   updatedBy   User?         @relation("ProductUpdater", fields: [updatedById], references: [id], onDelete: SetNull)
   deletedBy   User?         @relation("ProductDeleter", fields: [deletedById], references: [id], onDelete: SetNull)
-  voucherItem VoucherItem[] @relation("VoucherProduct")
 
   @@map("product")
 }
 
 model ProductCode {
-  id          String    @id() @default(cuid())
-  createdAt   DateTime  @default(now()) @map("created_at")
-  updatedAt   DateTime  @updatedAt() @map("updated_at")
-  deletedAt   DateTime? @map("deleted_at")
-  createdById String?   @map("created_by")
-  updatedById String?   @map("updated_by")
-  deletedById String?   @map("deleted_by")
-  code        Int       @unique() @default(autoincrement())
-  productId   String    @map("product_id")
-  product     Product   @relation(fields: [productId], references: [id], onDelete: Cascade)
-  createdBy   User?     @relation("ProductCodeCreator", fields: [createdById], references: [id], onDelete: SetNull)
-  updatedBy   User?     @relation("ProductCodeUpdater", fields: [updatedById], references: [id], onDelete: SetNull)
-  deletedBy   User?     @relation("ProductCodeDeleter", fields: [deletedById], references: [id], onDelete: SetNull)
+  id          String        @id() @default(cuid())
+  createdAt   DateTime      @default(now()) @map("created_at")
+  updatedAt   DateTime      @updatedAt() @map("updated_at")
+  deletedAt   DateTime?     @map("deleted_at")
+  createdById String?       @map("created_by")
+  updatedById String?       @map("updated_by")
+  deletedById String?       @map("deleted_by")
+  code        Int           @unique() @default(autoincrement())
+  productId   String        @map("product_id")
+  product     Product       @relation(fields: [productId], references: [id], onDelete: Cascade)
+  createdBy   User?         @relation("ProductCodeCreator", fields: [createdById], references: [id], onDelete: SetNull)
+  updatedBy   User?         @relation("ProductCodeUpdater", fields: [updatedById], references: [id], onDelete: SetNull)
+  deletedBy   User?         @relation("ProductCodeDeleter", fields: [deletedById], references: [id], onDelete: SetNull)
+  voucherItem VoucherItem[] @relation("VoucherProductCode")
 
   @@map("product_code")
 }
@@ -122,23 +125,26 @@ model Voucher {
 }
 
 model VoucherItem {
-  id             String    @id() @default(cuid())
-  createdAt      DateTime  @default(now()) @map("created_at")
-  updatedAt      DateTime  @updatedAt() @map("updated_at")
-  deletedAt      DateTime? @map("deleted_at")
-  createdById    String?   @map("created_by")
-  updatedById    String?   @map("updated_by")
-  deletedById    String?   @map("deleted_by")
-  quantity       Int       @default(0)
-  expirationDate DateTime? @map("expiration_date")
-  observation    String?   @default("") @db.Text()
-  received       Boolean   @default(false)
-  productId      String
-  Product        Product   @relation("VoucherProduct", fields: [productId], references: [id])
+  id             String      @id() @default(cuid())
+  createdAt      DateTime    @default(now()) @map("created_at")
+  updatedAt      DateTime    @updatedAt() @map("updated_at")
+  deletedAt      DateTime?   @map("deleted_at")
+  createdById    String?     @map("created_by")
+  updatedById    String?     @map("updated_by")
+  deletedById    String?     @map("deleted_by")
+  quantity       Int         @default(0)
+  expirationDate DateTime?   @map("expiration_date")
+  observation    String?     @default("") @db.Text()
+  received       Boolean     @default(false)
+  productCodeId  String
+  productCode    ProductCode @relation("VoucherProductCode", fields: [productCodeId], references: [id])
   voucherId      String
-  Voucher        Voucher   @relation(fields: [voucherId], references: [id])
+  Voucher        Voucher     @relation(fields: [voucherId], references: [id])
+  createdBy      User?       @relation("VoucherItemCreator", fields: [createdById], references: [id], onDelete: SetNull)
+  updatedBy      User?       @relation("VoucherItemUpdater", fields: [updatedById], references: [id], onDelete: SetNull)
+  deletedBy      User?       @relation("VoucherItemDeleter", fields: [deletedById], references: [id], onDelete: SetNull)
 
-  @@index([productId], name: "voucher_item_product_id")
+  @@index([productCodeId, voucherId])
   @@map("voucher_item")
 }
 
