@@ -4,23 +4,24 @@ import { AuthService } from '../auth.service';
 
 @Injectable()
 export class AuthGuard implements CanActivate {
-  // constructor(private readonly authService: AuthService) {}
+  constructor(private readonly authService: AuthService) {}
 
   async canActivate(context: ExecutionContext): Promise<boolean> {
-    // const request = context.switchToHttp().getRequest();
-    // const token = this.extractTokenFromHeader(request);
+    const request = context.switchToHttp().getRequest();
+    const token = this.extractTokenFromHeader(request);
 
-    // if (!token) throw new UnauthorizedException();
+    if (!token) throw new UnauthorizedException();
 
-    // try {
-    //   const { user, token: newToken } = await this.authService.verifyToken(token);
+    try {
+      const { user, token: newToken } = await this.authService.verifyToken(token);
 
-    //   request['user'] = user;
+      request['user'] = user;
 
-    //   request['token'] = newToken;
-    // } catch {
-    //   throw new UnauthorizedException();
-    // }
+      request['token'] = newToken;
+    } catch {
+      throw new UnauthorizedException();
+    }
+
     return true;
   }
 

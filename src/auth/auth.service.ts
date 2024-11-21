@@ -25,7 +25,7 @@ export class AuthService {
       this.logger.log(`Authenticating user with username: ${loginDto.username}`);
       const { username, password } = loginDto;
 
-      const user = await this.user.findFirst({ where: { username } });
+      const user = await this.user.findFirst({ where: { username }, select: USER_SELECT_SINGLE_PWD });
 
       if (!user)
         throw new UnauthorizedException({ status: HttpStatus.UNAUTHORIZED, message: '[ERROR] Invalid credentials' });
@@ -35,9 +35,10 @@ export class AuthService {
       if (!isValidPassword)
         throw new UnauthorizedException({ status: HttpStatus.UNAUTHORIZED, message: '[ERROR] Invalid credentials' });
 
-      ObjectManipulator.safeDelete(user, 'password');
+      const roles = user.userRoles.map((role) => role.role);
+      const cleanUser = ObjectManipulator.exclude(user, ['password', 'userRoles']);
 
-      return { user, token: this.signToken({ id: user.id }) };
+      return { user: { ...cleanUser, roles }, token: this.signToken({ id: user.id }) };
     } catch (error) {
       this.exHandler.process(error);
     }
@@ -59,8 +60,10 @@ export class AuthService {
       if (!user) throw new UnauthorizedException({ status: HttpStatus.UNAUTHORIZED, message: 'Invalid token' });
 
       const tokenSigned = this.signToken({ id: user.id });
+      const roles = user.userRoles.map((role) => role.role);
+      const cleanUser = ObjectManipulator.exclude(user, ['password', 'userRoles']);
 
-      return { user: user, token: tokenSigned };
+      return { user: { ...cleanUser, roles }, token: tokenSigned };
     } catch (error) {
       this.exHandler.process(error);
     }
