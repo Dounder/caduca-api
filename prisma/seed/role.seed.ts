@@ -1,4 +1,5 @@
 import { PrismaClient } from '@prisma/client';
+
 const roles = [
   {
     id: 'cm3rmdiwl00010clfbut56c4r',

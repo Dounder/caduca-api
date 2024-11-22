@@ -3,7 +3,7 @@ import { ProductCode } from '@prisma/client';
 
 import { ExceptionHandler, hasRoles, ObjectManipulator } from 'src/helpers';
 import { PrismaService } from 'src/prisma/prisma.service';
-import { CurrentUser, Role } from 'src/user';
+import { CurrentUser, RoleId } from 'src/user';
 import { CreateProductCodeDto } from './dto';
 
 const EXCLUDE_FIELDS: (keyof ProductCode)[] = ['createdById', 'updatedById', 'deletedById', 'productId'];
@@ -47,7 +47,7 @@ export class ProductCodeService {
   async findByCode(code: number, user: CurrentUser) {
     this.logger.log(`Fetching product by code: ${code}, user: ${user.username} (${user.id})`);
     try {
-      const isAdmin = hasRoles(user.roles, [Role.Admin]);
+      const isAdmin = hasRoles(user.roles, [RoleId.Admin]);
       const where = isAdmin ? { code } : { code, deletedAt: null };
 
       const productCode = await this.prisma.productCode.findFirst({ where, include: INCLUDE_FIELDS });
@@ -61,7 +61,7 @@ export class ProductCodeService {
   async findOne(id: string, user: CurrentUser) {
     this.logger.log(`Fetching product by id: ${id}, user: ${user.username} (${user.id})`);
     try {
-      const isAdmin = hasRoles(user.roles, [Role.Admin]);
+      const isAdmin = hasRoles(user.roles, [RoleId.Admin]);
       const where = isAdmin ? { id } : { id, deletedAt: null };
 
       const productCode = await this.prisma.productCode.findFirst({ where, include: INCLUDE_FIELDS });

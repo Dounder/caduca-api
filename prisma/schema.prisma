@@ -66,7 +66,7 @@ model Role {
 }
 
 model UserRole {
-  id           Int      @id() @default(autoincrement())
+  id           String   @id() @default(cuid())
   assignedAt   DateTime @default(now())
   user         User     @relation("UserRoleAssigned", fields: [userId], references: [id], onDelete: Cascade)
   userId       String

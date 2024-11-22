@@ -1,6 +1,6 @@
 import { PrismaClient } from '@prisma/client';
 import * as bcrypt from 'bcrypt';
-import { Role } from '../../src/user';
+import { RoleId } from '../../src/user';
 
 export const userSeed = async (prisma: PrismaClient) => {
   await prisma.user.upsert({
@@ -13,7 +13,7 @@ export const userSeed = async (prisma: PrismaClient) => {
       username: 'admin',
       email: 'admin@google.com',
       password: bcrypt.hashSync('Abcd@123', 10),
-      userRoles: { create: { roleId: Role.Admin } },
+      userRoles: { create: { roleId: RoleId.Admin } },
     },
   });
 };

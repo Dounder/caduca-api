@@ -11,13 +11,12 @@ import { USER_SELECT_SINGLE_PWD } from 'src/user';
 
 @Injectable()
 export class AuthService {
-  private readonly user = this.prismaService.user;
   private readonly logger = new Logger(AuthService.name);
   private readonly exHandler = new ExceptionHandler(this.logger, AuthService.name);
 
   constructor(
     private readonly jwtService: JwtService,
-    private readonly prismaService: PrismaService,
+    private readonly prisma: PrismaService,
   ) {}
 
   async login(loginDto: LoginDto): Promise<AuthResponse> {
@@ -25,7 +24,7 @@ export class AuthService {
       this.logger.log(`Authenticating user with username: ${loginDto.username}`);
       const { username, password } = loginDto;
 
-      const user = await this.user.findFirst({ where: { username }, select: USER_SELECT_SINGLE_PWD });
+      const user = await this.prisma.user.findFirst({ where: { username }, select: USER_SELECT_SINGLE_PWD });
 
       if (!user)
         throw new UnauthorizedException({ status: HttpStatus.UNAUTHORIZED, message: '[ERROR] Invalid credentials' });
@@ -52,7 +51,7 @@ export class AuthService {
 
       const { id } = ObjectManipulator.exclude(payload, ['exp', 'iat']);
 
-      const user = await this.user.findFirst({
+      const user = await this.prisma.user.findFirst({
         where: { id },
         select: USER_SELECT_SINGLE_PWD,
       });

@@ -5,11 +5,11 @@ import { User } from '@prisma/client';
 import { Auth, GetUser } from 'src/auth';
 import { ListResponse, PaginationDto, ParseCuidPipe } from 'src/common';
 import { CreateUserDto, UpdateUserDto } from './dto';
-import { CurrentUser, Role, UserResponse, UserSummary } from './interfaces';
+import { CurrentUser, RoleId, UserResponse, UserSummary } from './interfaces';
 import { UserService } from './user.service';
 
 @Controller('user')
-@Auth(Role.Admin, Role.Developer, Role.Manager)
+@Auth(RoleId.Admin, RoleId.Developer, RoleId.Manager)
 export class UserController {
   constructor(
     private readonly usersService: UserService,
@@ -28,9 +28,11 @@ export class UserController {
 
   @Get()
   findAll(@Query() pagination: PaginationDto, @GetUser() user: CurrentUser): Promise<ListResponse<User>> {
-    return this.getCachedResponse(`user:all:${JSON.stringify(pagination)}`, () =>
-      this.usersService.findAll(pagination, user),
-    );
+    const cacheKey = `user:page:${pagination.page}:limit:${pagination.limit}`;
+    return this.usersService.findAll(pagination, user);
+    // return this.getCachedResponse(cacheKey, () =>
+    //   this.usersService.findAll(pagination, user),
+    // );
   }
 
   @Get(':id')
@@ -58,13 +60,13 @@ export class UserController {
   }
 
   @Delete(':id')
-  @Auth(Role.Admin, Role.Developer)
+  @Auth(RoleId.Admin, RoleId.Developer)
   remove(@Param('id', ParseCuidPipe) id: string, @GetUser() user: CurrentUser): Promise<UserResponse> {
     return this.usersService.remove(id, user);
   }
 
   @Patch(':id/restore')
-  @Auth(Role.Admin, Role.Developer)
+  @Auth(RoleId.Admin, RoleId.Developer)
   restore(@Param('id', ParseCuidPipe) id: string, @GetUser() user: CurrentUser): Promise<UserResponse> {
     return this.usersService.restore(id, user);
   }

@@ -1,5 +1,4 @@
 import { PrismaClient } from '@prisma/client';
-import { Role } from 'src/user';
 import { ReturnType, VoucherStatus } from '../../src/voucher/interfaces';
 
 interface CatalogSeed {

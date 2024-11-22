@@ -2,7 +2,7 @@ import { Controller, Get, Post, Body, Patch, Param, Delete, ParseIntPipe, Query 
 import { ProductService } from './product.service';
 import { CreateProductDto, UpdateProductDto } from './dto';
 import { Auth, GetUser } from 'src/auth';
-import { CurrentUser, Role } from 'src/user';
+import { CurrentUser, RoleId } from 'src/user';
 import { PaginationDto, ParseCuidPipe } from 'src/common';
 
 @Controller('product')
@@ -11,7 +11,7 @@ export class ProductController {
   constructor(private readonly productService: ProductService) {}
 
   @Post()
-  @Auth(Role.Admin, Role.Manager, Role.Developer)
+  @Auth(RoleId.Admin, RoleId.Manager, RoleId.Developer)
   create(@Body() createProductDto: CreateProductDto, @GetUser() user: CurrentUser) {
     return this.productService.create(createProductDto, user);
   }
@@ -27,7 +27,7 @@ export class ProductController {
   }
 
   @Patch(':id')
-  @Auth(Role.Admin, Role.Manager, Role.Developer)
+  @Auth(RoleId.Admin, RoleId.Manager, RoleId.Developer)
   update(
     @Param('id', ParseCuidPipe) id: string,
     @Body() updateProductDto: UpdateProductDto,
@@ -37,13 +37,13 @@ export class ProductController {
   }
 
   @Delete(':id')
-  @Auth(Role.Admin, Role.Developer)
+  @Auth(RoleId.Admin, RoleId.Developer)
   remove(@Param('id', ParseCuidPipe) id: string, @GetUser() user: CurrentUser) {
     return this.productService.remove(id, user);
   }
 
   @Patch(':id/restore')
-  @Auth(Role.Admin, Role.Developer)
+  @Auth(RoleId.Admin, RoleId.Developer)
   restore(@Param('id', ParseCuidPipe) id: string, @GetUser() user: CurrentUser) {
     return this.productService.restore(id, user);
   }

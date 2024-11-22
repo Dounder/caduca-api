@@ -6,7 +6,7 @@ export const USER_AUDIT_SELECT = {
   },
 };
 
-export const USER_SELECT_SINGLE = {
+export const USER_SELECT_LIST = {
   id: true,
   username: true,
   email: true,
@@ -15,6 +15,10 @@ export const USER_SELECT_SINGLE = {
   updatedAt: true,
   deletedAt: true,
   createdBy: USER_AUDIT_SELECT,
+};
+
+export const USER_SELECT_SINGLE = {
+  ...USER_SELECT_LIST,
   updatedBy: USER_AUDIT_SELECT,
   deletedBy: USER_AUDIT_SELECT,
 };

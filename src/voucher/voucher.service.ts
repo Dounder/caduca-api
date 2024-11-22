@@ -3,7 +3,7 @@ import { ConflictException, HttpStatus, Injectable, Logger, NotFoundException } 
 import { PaginationDto } from 'src/common';
 import { ExceptionHandler, hasRoles } from 'src/helpers';
 import { PrismaService } from 'src/prisma/prisma.service';
-import { CurrentUser, Role } from 'src/user';
+import { CurrentUser, RoleId } from 'src/user';
 import { CreateVoucherDto } from './dto';
 import { validateVoucherStatusChange, VOUCHER_SELECT_LIST, VOUCHER_SELECT_SINGLE } from './helpers';
 import { VoucherStatus } from './interfaces';
@@ -36,7 +36,7 @@ export class VoucherService {
 
   async findAll(pagination: PaginationDto, user: CurrentUser) {
     const { page, limit } = pagination;
-    const isAdmin = hasRoles(user.roles, [Role.Admin]);
+    const isAdmin = hasRoles(user.roles, [RoleId.Admin]);
     const where = isAdmin ? {} : { deletedAt: null };
 
     const [data, total] = await this.prisma.$transaction([
@@ -57,7 +57,7 @@ export class VoucherService {
   async findOne(id: string, user: CurrentUser) {
     this.logger.log(`Fetching voucher: ${id}, user: ${user.username} (${user.id})`);
     try {
-      const isAdmin = hasRoles(user.roles, [Role.Admin]);
+      const isAdmin = hasRoles(user.roles, [RoleId.Admin]);
       const where = isAdmin ? { id } : { id, deletedAt: null };
 
       const voucher = await this.prisma.voucher.findFirst({

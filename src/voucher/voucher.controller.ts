@@ -2,12 +2,12 @@ import { Body, Controller, Delete, Get, Param, Patch, Post, Query } from '@nestj
 
 import { Auth, GetUser } from 'src/auth';
 import { PaginationDto, ParseCuidPipe } from 'src/common';
-import { CurrentUser, Role } from 'src/user';
+import { CurrentUser, RoleId } from 'src/user';
 import { CreateVoucherDto, UpdateVoucherStatusDto } from './dto';
 import { VoucherService } from './voucher.service';
 
 @Controller('voucher')
-@Auth(Role.Admin, Role.Manager, Role.Developer)
+@Auth(RoleId.Admin, RoleId.Manager, RoleId.Developer)
 export class VoucherController {
   constructor(private readonly voucherService: VoucherService) {}
 

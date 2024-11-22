@@ -5,7 +5,7 @@ import { Customer } from '@prisma/client';
 import { ListResponse, PaginationDto } from 'src/common';
 import { ExceptionHandler, hasRoles, ObjectManipulator } from 'src/helpers';
 import { PrismaService } from 'src/prisma/prisma.service';
-import { CurrentUser, Role } from 'src/user';
+import { CurrentUser, RoleId } from 'src/user';
 import { CreateCustomerDto, UpdateCustomerDto } from './dto';
 
 const EXCLUDE_FIELDS: (keyof Customer)[] = ['createdById', 'updatedById', 'deletedById'];
@@ -52,7 +52,7 @@ export class CustomerService {
   async findAll(pagination: PaginationDto, user: CurrentUser): Promise<ListResponse<Customer>> {
     this.logger.log(`Fetching customers: ${JSON.stringify(pagination)}, user: ${user.username} (${user.id})`);
     const { page, limit } = pagination;
-    const isAdmin = hasRoles(user.roles, [Role.Admin]);
+    const isAdmin = hasRoles(user.roles, [RoleId.Admin]);
     const where = isAdmin ? {} : { deletedAt: null };
 
     const [data, total] = await this.prisma.$transaction([
@@ -73,7 +73,7 @@ export class CustomerService {
   async findOne(id: string, user: CurrentUser): Promise<Partial<Customer>> {
     this.logger.log(`Fetching customer: ${id}, user: ${user.username} (${user.id})`);
     try {
-      const isAdmin = hasRoles(user.roles, [Role.Admin]);
+      const isAdmin = hasRoles(user.roles, [RoleId.Admin]);
       const where = isAdmin ? { id } : { id, deletedAt: null };
 
       const customer = await this.prisma.customer.findUnique({
@@ -96,7 +96,7 @@ export class CustomerService {
   async findByCode(code: number, user: CurrentUser): Promise<Partial<Customer>> {
     this.logger.log(`Fetching customer: ${code}, user: ${user.username} (${user.id})`);
     try {
-      const isAdmin = hasRoles(user.roles, [Role.Admin]);
+      const isAdmin = hasRoles(user.roles, [RoleId.Admin]);
       const where = isAdmin ? { code } : { code, deletedAt: null };
 
       const customer = await this.prisma.customer.findUnique({
