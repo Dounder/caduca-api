@@ -22,9 +22,15 @@ export class CustomerController {
 
   @Get()
   findAll(@Query() pagination: PaginationDto, @GetUser() user: CurrentUser) {
-    const cacheKey = `customers:page:${pagination.page}:limit:${pagination.limit}`;
+    const cacheKey = `customer:page:${pagination.page}:limit:${pagination.limit}`;
 
     return this.getCachedResponse(cacheKey, () => this.customerService.findAll(pagination, user));
+  }
+
+  @Get('clear_cache')
+  async clearCache() {
+    await this.customerService.clearCache();
+    return 'Cache cleared';
   }
 
   @Get(':id')
