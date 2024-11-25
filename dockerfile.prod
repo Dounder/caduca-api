@@ -1,54 +1,46 @@
 # Base dependencies layer
-FROM node:21-alpine3.19 AS base
+FROM node:22-slim AS base
 
 WORKDIR /usr/src/app
 
 COPY package.json pnpm-lock.yaml ./
 
-RUN npm install -g pnpm
-
-# Install dependencies only once
-RUN pnpm install --frozen-lockfile
+# Install pnpm and production dependencies
+RUN apt-get update -y && apt-get install -y openssl \
+  && npm install -g pnpm --no-cache \
+  && npm install -g @nestjs/cli --no-cache \
+  && pnpm install --frozen-lockfile \
+  && pnpm add -D @types/express \
+  && apt-get clean && rm -rf /var/lib/apt/lists/*
 
 # Builder - build the application
-FROM node:21-alpine3.19 AS build
+FROM base AS build
 
 WORKDIR /usr/src/app
 
-COPY --from=base /usr/src/app/node_modules ./node_modules
+# Set the database URL as a build argument
+ARG DATABASE_URL
+ENV DATABASE_URL=${DATABASE_URL}
+
 COPY . .
 
-RUN npm install -g pnpm
-
-# Generate Prisma client
-RUN pnpm prisma generate
-
-# Build the NestJS application
-RUN pnpm build
-
-# Prune development dependencies
-RUN pnpm prune --prod
-
-# Remove unnecessary files from node_modules to further reduce size
-RUN find ./node_modules -name "*.md" -type f -delete \
-  && find ./node_modules -name "*.ts" -type f -delete \
-  && find ./node_modules -name "*.map" -type f -delete \
-  && find ./node_modules -name "test" -type d -exec rm -rf {} + \
-  && find ./node_modules -name "tests" -type d -exec rm -rf {} +
+# Generate Prisma client and build the app
+RUN pnpm prisma generate \
+  && pnpm build
 
 # Final image
-FROM node:21-alpine3.19 AS prod
+FROM node:22-slim AS prod
 
 WORKDIR /usr/src/app
 
-# Copy only the necessary files for production
-COPY --from=build /usr/src/app/node_modules ./node_modules
+# Copy only production dependencies and build artifacts
 COPY --from=build /usr/src/app/dist ./dist
 COPY --from=build /usr/src/app/prisma ./prisma
-COPY --from=build /usr/src/app/package.json ./package.json
+COPY --from=base /usr/src/app/node_modules ./node_modules
+COPY package.json .
 
 # Install pnpm in the production stage
-RUN npm install -g pnpm
+RUN npm install -g pnpm --no-cache
 
 ENV NODE_ENV=production
 
@@ -56,5 +48,4 @@ USER node
 
 EXPOSE 3000
 
-# Ensure Prisma migrations are applied before starting the app
 CMD ["sh", "-c", "pnpm prisma migrate deploy && node dist/main.js"]

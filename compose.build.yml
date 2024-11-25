@@ -1,0 +1,24 @@
+services:
+  api_version:
+    container_name: caduca
+    build:
+      context: .
+      dockerfile: dockerfile.prod
+      platforms:
+        - linux/amd64
+        - linux/arm64
+    image: devbotica/caduca:1
+    environment:
+      - DATABASE_URL=postgresql://postgres:123123@localhost:5432/caduca
+
+  api_latest:
+    container_name: caduca
+    build:
+      context: .
+      dockerfile: dockerfile.prod
+      platforms:
+        - linux/amd64
+        - linux/arm64
+    image: devbotica/caduca
+    environment:
+      - DATABASE_URL=postgresql://postgres:123123@localhost:5432/caduca
