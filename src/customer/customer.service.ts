@@ -188,7 +188,6 @@ export class CustomerService {
   async clearCache() {
     this.logger.log('Clearing customer cache');
     const keys = await this.cacheManager.store.keys('customer:*');
-    console.log('🚀 ~ CustomerService ~ clearCache ~ keys:', keys);
     if (keys.length > 0) await this.cacheManager.store.mdel(...keys);
   }
 }
