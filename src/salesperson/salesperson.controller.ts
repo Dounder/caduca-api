@@ -2,12 +2,12 @@ import { Cache, CACHE_MANAGER } from '@nestjs/cache-manager';
 import { Body, Controller, Delete, Get, Inject, Param, ParseIntPipe, Patch, Post, Query } from '@nestjs/common';
 import { Auth, GetUser } from 'src/auth';
 import { PaginationDto, ParseCuidPipe } from 'src/common';
-import { CurrentUser, Role } from 'src/user';
+import { CurrentUser, RoleId } from 'src/user';
 import { CreateSalespersonDto, UpdateSalespersonDto } from './dto';
 import { SalespersonService } from './salesperson.service';
 
 @Controller('salesperson')
-@Auth(Role.Admin, Role.Developer, Role.Manager)
+@Auth(RoleId.Admin, RoleId.Developer, RoleId.Manager)
 export class SalespersonController {
   constructor(
     private readonly salespersonService: SalespersonService,

@@ -3,7 +3,7 @@ import { BadRequestException, HttpStatus, Injectable, Logger } from '@nestjs/com
 import { PaginationDto } from 'src/common';
 import { ExceptionHandler, hasRoles } from 'src/helpers';
 import { PrismaService } from 'src/prisma/prisma.service';
-import { CurrentUser, Role } from 'src/user';
+import { CurrentUser, RoleId } from 'src/user';
 import { CreateVoucherItemDto, UpdateVoucherItemDto } from './dto';
 import { VOUCHER_ITEM_SINGLE } from './helpers';
 
@@ -43,7 +43,7 @@ export class VoucherItemService {
 
   async findAll(pagination: PaginationDto, user: CurrentUser) {
     const { page, limit } = pagination;
-    const isAdmin = hasRoles(user.roles, [Role.Admin]);
+    const isAdmin = hasRoles(user.roles, [RoleId.Admin]);
     const where = isAdmin ? {} : { deletedAt: null };
 
     const [data, total] = await this.prisma.$transaction([

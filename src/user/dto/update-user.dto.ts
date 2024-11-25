@@ -32,15 +32,4 @@ export class UpdateUserDto {
   @Transform(({ value }) => value.trim().toLowerCase())
   @IsOptional()
   email?: string;
-
-  /**
-   * The roles assigned to the user.
-   * Must be a valid array of roles and is optional.
-   *
-   * @type {Role[]}
-   * @optional
-   */
-  @IsEnum(Role, { each: true })
-  @IsOptional()
-  roles: Role[];
 }

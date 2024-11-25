@@ -1,22 +1,13 @@
 import { Cache, CACHE_MANAGER } from '@nestjs/cache-manager';
 import { ConflictException, HttpStatus, Inject, Injectable, Logger, NotFoundException } from '@nestjs/common';
-import { Customer, Role } from '@prisma/client';
+import { Customer } from '@prisma/client';
 
 import { ListResponse, PaginationDto } from 'src/common';
-import { ExceptionHandler, hasRoles, ObjectManipulator } from 'src/helpers';
+import { ExceptionHandler, hasRoles } from 'src/helpers';
 import { PrismaService } from 'src/prisma/prisma.service';
-import { CurrentUser } from 'src/user';
+import { CurrentUser, RoleId } from 'src/user';
 import { CreateCustomerDto, UpdateCustomerDto } from './dto';
-
-const EXCLUDE_FIELDS: (keyof Customer)[] = ['createdById', 'updatedById', 'deletedById'];
-const INCLUDE_LIST = {
-  createdBy: { select: { id: true, username: true, email: true } },
-};
-const INCLUDE_SINGLE = {
-  ...INCLUDE_LIST,
-  updatedBy: { select: { id: true, username: true, email: true } },
-  deletedBy: { select: { id: true, username: true, email: true } },
-};
+import { CUSTOMER_SELECT_LIST, CUSTOMER_SELECT_SINGLE } from './helper';
 
 @Injectable()
 export class CustomerService {
@@ -38,12 +29,12 @@ export class CustomerService {
           createdBy: { connect: { id: user.id } },
           logs: { create: { message, createdBy: { connect: { id: user.id } } } },
         },
-        include: INCLUDE_SINGLE,
+        select: CUSTOMER_SELECT_SINGLE,
       });
 
       this.clearCache();
 
-      return this.excludeFields(customer);
+      return customer;
     } catch (error) {
       this.exHandler.process(error);
     }
@@ -52,7 +43,7 @@ export class CustomerService {
   async findAll(pagination: PaginationDto, user: CurrentUser): Promise<ListResponse<Customer>> {
     this.logger.log(`Fetching customers: ${JSON.stringify(pagination)}, user: ${user.username} (${user.id})`);
     const { page, limit } = pagination;
-    const isAdmin = hasRoles(user.roles, [Role.Admin]);
+    const isAdmin = hasRoles(user.roles, [RoleId.Admin]);
     const where = isAdmin ? {} : { deletedAt: null };
 
     const [data, total] = await this.prisma.$transaction([
@@ -60,26 +51,23 @@ export class CustomerService {
         take: limit,
         skip: (page - 1) * limit,
         where,
-        include: INCLUDE_LIST,
+        select: CUSTOMER_SELECT_LIST,
       }),
       this.prisma.customer.count({ where }),
     ]);
 
     const lastPage = Math.ceil(total / limit);
 
-    return { meta: { total, page, lastPage }, data: data.map(this.excludeFields) };
+    return { meta: { total, page, lastPage }, data };
   }
 
   async findOne(id: string, user: CurrentUser): Promise<Partial<Customer>> {
     this.logger.log(`Fetching customer: ${id}, user: ${user.username} (${user.id})`);
     try {
-      const isAdmin = hasRoles(user.roles, [Role.Admin]);
+      const isAdmin = hasRoles(user.roles, [RoleId.Admin]);
       const where = isAdmin ? { id } : { id, deletedAt: null };
 
-      const customer = await this.prisma.customer.findUnique({
-        where,
-        include: INCLUDE_SINGLE,
-      });
+      const customer = await this.prisma.customer.findUnique({ where, select: CUSTOMER_SELECT_SINGLE });
 
       if (!customer)
         throw new NotFoundException({
@@ -87,7 +75,7 @@ export class CustomerService {
           message: `[ERROR] Customer with id ${id} not found`,
         });
 
-      return this.excludeFields(customer);
+      return customer;
     } catch (error) {
       this.exHandler.process(error);
     }
@@ -96,13 +84,10 @@ export class CustomerService {
   async findByCode(code: number, user: CurrentUser): Promise<Partial<Customer>> {
     this.logger.log(`Fetching customer: ${code}, user: ${user.username} (${user.id})`);
     try {
-      const isAdmin = hasRoles(user.roles, [Role.Admin]);
+      const isAdmin = hasRoles(user.roles, [RoleId.Admin]);
       const where = isAdmin ? { code } : { code, deletedAt: null };
 
-      const customer = await this.prisma.customer.findUnique({
-        where,
-        include: INCLUDE_SINGLE,
-      });
+      const customer = await this.prisma.customer.findUnique({ where, select: CUSTOMER_SELECT_SINGLE });
 
       if (!customer)
         throw new NotFoundException({
@@ -110,7 +95,7 @@ export class CustomerService {
           message: `[ERROR] Customer with code ${code} not found`,
         });
 
-      return this.excludeFields(customer);
+      return customer;
     } catch (error) {
       this.exHandler.process(error);
     }
@@ -129,12 +114,12 @@ export class CustomerService {
           updatedBy: { connect: { id: user.id } },
           logs: { create: { message, createdBy: { connect: { id: user.id } } } },
         },
-        include: INCLUDE_SINGLE,
+        select: CUSTOMER_SELECT_SINGLE,
       });
 
-      this.clearCache();
+      await this.clearCache();
 
-      return this.excludeFields(updatedCustomer);
+      return updatedCustomer;
     } catch (error) {
       this.exHandler.process(error);
     }
@@ -159,12 +144,12 @@ export class CustomerService {
           deletedBy: { connect: { id: user.id } },
           logs: { create: { message, createdBy: { connect: { id: user.id } } } },
         },
-        include: INCLUDE_SINGLE,
+        select: CUSTOMER_SELECT_SINGLE,
       });
 
-      this.clearCache();
+      await this.clearCache();
 
-      return this.excludeFields(deletedCustomer);
+      return deletedCustomer;
     } catch (error) {
       this.exHandler.process(error);
     }
@@ -189,28 +174,20 @@ export class CustomerService {
           deletedBy: { disconnect: true },
           logs: { create: { message, createdBy: { connect: { id: user.id } } } },
         },
-        include: INCLUDE_SINGLE,
+        select: CUSTOMER_SELECT_SINGLE,
       });
 
-      this.clearCache();
+      await this.clearCache();
 
-      return this.excludeFields(restoredCustomer);
+      return restoredCustomer;
     } catch (error) {
       this.exHandler.process(error);
     }
   }
 
-  private clearCache() {
-    this.cacheManager.reset();
-  }
-
-  /**
-   * Excludes specified fields from the given Customer object.
-   *
-   * @param data - The Customer object from which fields will be excluded.
-   * @returns A new Customer object with the specified fields excluded.
-   */
-  private excludeFields(data: Customer): Partial<Customer> {
-    return ObjectManipulator.exclude<Customer>(data, EXCLUDE_FIELDS);
+  async clearCache() {
+    this.logger.log('Clearing customer cache');
+    const keys = await this.cacheManager.store.keys('customer:*');
+    if (keys.length > 0) await this.cacheManager.store.mdel(...keys);
   }
 }

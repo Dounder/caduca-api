@@ -1,12 +1,10 @@
-import { User } from '@prisma/client';
-
 export interface JwtPayload {
   id: string;
 }
 
 export interface AuthResponse {
   token: string;
-  user: User;
+  user: any;
 }
 
 export interface SignedToken extends JwtPayload {

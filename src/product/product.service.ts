@@ -1,29 +1,23 @@
-import { ConflictException, HttpStatus, Injectable, Logger, NotFoundException } from '@nestjs/common';
-import { Prisma, Product, Role } from '@prisma/client';
+import { ConflictException, HttpStatus, Inject, Injectable, Logger, NotFoundException } from '@nestjs/common';
+import { Prisma, Product } from '@prisma/client';
 
+import { Cache, CACHE_MANAGER } from '@nestjs/cache-manager';
 import { PaginationDto } from 'src/common';
-import { ExceptionHandler, hasRoles, ObjectManipulator } from 'src/helpers';
+import { ExceptionHandler, hasRoles } from 'src/helpers';
 import { PrismaService } from 'src/prisma/prisma.service';
-import { CurrentUser } from 'src/user';
+import { CurrentUser, RoleId } from 'src/user';
 import { CreateProductDto, UpdateProductDto } from './dto';
-
-const EXCLUDE_FIELDS: (keyof Product)[] = ['createdById', 'updatedById', 'deletedById'];
-const PRODUCT_INCLUDE_SINGLE = {
-  codes: { select: { id: true, code: true }, where: { deletedAt: null }, orderBy: { code: Prisma.SortOrder.asc } },
-  createdBy: { select: { id: true, username: true, email: true } },
-  updatedBy: { select: { id: true, username: true, email: true } },
-  deletedBy: { select: { id: true, username: true, email: true } },
-};
-const PRODUCT_INCLUDE_LIST = {
-  createdBy: { select: { id: true, username: true, email: true } },
-};
+import { PRODUCT_SELECT_LIST, PRODUCT_SELECT_SINGLE } from './helper';
 
 @Injectable()
 export class ProductService {
   private readonly logger = new Logger(ProductService.name);
   private readonly exHandler = new ExceptionHandler(this.logger, ProductService.name);
 
-  constructor(private readonly prisma: PrismaService) {}
+  constructor(
+    private readonly prisma: PrismaService,
+    @Inject(CACHE_MANAGER) private readonly cacheManager: Cache,
+  ) {}
 
   async create(createProductDto: CreateProductDto, user: CurrentUser): Promise<Partial<Product>> {
     this.logger.log(`Creating product: ${JSON.stringify(createProductDto)}, user: ${user.username} (${user.id})`);
@@ -35,10 +29,12 @@ export class ProductService {
           updatedBy: { connect: { id: user.id } },
           codes: { create: { createdBy: { connect: { id: user.id } } } },
         },
-        include: PRODUCT_INCLUDE_SINGLE,
+        select: PRODUCT_SELECT_SINGLE,
       });
 
-      return this.excludeProductFields(product);
+      await this.clearCache();
+
+      return product;
     } catch (error) {
       this.exHandler.process(error);
     }
@@ -47,7 +43,7 @@ export class ProductService {
   async findAll(pagination: PaginationDto, user: CurrentUser) {
     this.logger.log(`Fetching products: ${JSON.stringify(pagination)}, user: ${user.username} (${user.id})`);
     const { page, limit } = pagination;
-    const isAdmin = hasRoles(user.roles, [Role.Admin]);
+    const isAdmin = hasRoles(user.roles, [RoleId.Admin]);
     const where = isAdmin ? {} : { deletedAt: null };
 
     const [data, total] = await this.prisma.$transaction([
@@ -55,7 +51,7 @@ export class ProductService {
         take: limit,
         skip: (page - 1) * limit,
         where,
-        include: PRODUCT_INCLUDE_LIST,
+        select: PRODUCT_SELECT_LIST,
         orderBy: { createdAt: Prisma.SortOrder.desc },
       }),
       this.prisma.product.count({ where }),
@@ -63,19 +59,16 @@ export class ProductService {
 
     const lastPage = Math.ceil(total / limit);
 
-    return { meta: { total, page, lastPage }, data: data.map(this.excludeProductFields) };
+    return { meta: { total, page, lastPage }, data };
   }
 
   async findOne(id: string, user: CurrentUser) {
     this.logger.log(`Fetching product: ${id}, user: ${user.username} (${user.id})`);
     try {
-      const isAdmin = hasRoles(user.roles, [Role.Admin]);
+      const isAdmin = hasRoles(user.roles, [RoleId.Admin]);
       const where = isAdmin ? { id } : { id, deletedAt: null };
 
-      const product = await this.prisma.product.findFirst({
-        where,
-        include: PRODUCT_INCLUDE_SINGLE,
-      });
+      const product = await this.prisma.product.findFirst({ where, select: PRODUCT_SELECT_SINGLE });
 
       if (!product)
         throw new NotFoundException({
@@ -83,7 +76,7 @@ export class ProductService {
           message: `[ERROR] Product with id ${id} not found`,
         });
 
-      return this.excludeProductFields(product);
+      return product;
     } catch (error) {
       this.exHandler.process(error);
     }
@@ -102,10 +95,12 @@ export class ProductService {
           ...updateProductDto,
           updatedBy: { connect: { id: user.id } },
         },
-        include: PRODUCT_INCLUDE_SINGLE,
+        select: PRODUCT_SELECT_SINGLE,
       });
 
-      return this.excludeProductFields(product);
+      await this.clearCache();
+
+      return product;
     } catch (error) {
       this.exHandler.process(error);
     }
@@ -122,7 +117,7 @@ export class ProductService {
           deletedAt: new Date(),
           deletedBy: { connect: { id: user.id } },
         },
-        include: PRODUCT_INCLUDE_SINGLE,
+        select: PRODUCT_SELECT_SINGLE,
       });
 
       if (product.deletedAt !== null)
@@ -131,7 +126,9 @@ export class ProductService {
           message: `[ERROR] Product with id ${id} is already deleted`,
         });
 
-      return this.excludeProductFields(product);
+      await this.clearCache();
+
+      return product;
     } catch (error) {
       this.exHandler.process(error);
     }
@@ -148,7 +145,7 @@ export class ProductService {
           deletedAt: null,
           deletedBy: { disconnect: true },
         },
-        include: PRODUCT_INCLUDE_SINGLE,
+        select: PRODUCT_SELECT_SINGLE,
       });
 
       if (product.deletedAt === null)
@@ -157,13 +154,17 @@ export class ProductService {
           message: `[ERROR] Product with id ${id} is already restored`,
         });
 
-      return this.excludeProductFields(product);
+      await this.clearCache();
+
+      return product;
     } catch (error) {
       this.exHandler.process(error);
     }
   }
 
-  private excludeProductFields(item: Product): Partial<Product> {
-    return ObjectManipulator.exclude<Product>(item, EXCLUDE_FIELDS);
+  async clearCache() {
+    this.logger.log('Clearing customer cache');
+    const keys = await this.cacheManager.store.keys('product:*');
+    if (keys.length > 0) await this.cacheManager.store.mdel(...keys);
   }
 }

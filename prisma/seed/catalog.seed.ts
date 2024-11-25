@@ -19,6 +19,7 @@ export const catalogSeed = async (prisma: PrismaClient) => {
 
   try {
     await prisma.$transaction(upserts);
+    console.log('Catalog seeded successfully');
   } catch (error) {
     console.error('Error seeding the catalog:', error);
   }

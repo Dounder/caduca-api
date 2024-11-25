@@ -1,12 +1,14 @@
 import { PrismaClient } from '@prisma/client';
 import { userSeed } from './user.seed';
 import { catalogSeed } from './catalog.seed';
+import { roleSeed } from './role.seed';
 
 const prisma = new PrismaClient();
 
 const main = async () => {
-  await userSeed(prisma);
   await catalogSeed(prisma);
+  await roleSeed(prisma);
+  await userSeed(prisma);
 };
 
 main()

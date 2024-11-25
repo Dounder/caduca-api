@@ -1,5 +1,6 @@
-import { CATALOG_SELECT, USER_AUDIT_SELECT } from 'src/common';
+import { CATALOG_SELECT } from 'src/common';
 import { CUSTOMER_SUMMARY } from 'src/customer';
+import { USER_AUDIT_SELECT } from 'src/user';
 
 export const VOUCHER_SELECT_LIST = {
   id: true,

@@ -1,6 +1,7 @@
-import { Role } from '@prisma/client';
 import { Transform } from 'class-transformer';
-import { IsEmail, IsEnum, IsOptional, IsString, IsStrongPassword, IsUUID, MinLength } from 'class-validator';
+import { IsEmail, IsOptional, IsString, IsStrongPassword, MinLength } from 'class-validator';
+import { RoleId } from '../interfaces';
+import { IsCuid } from 'src/common';
 
 /**
  * Data Transfer Object (DTO) for creating a new user.
@@ -45,13 +46,11 @@ export class CreateUserDto {
   password?: string;
 
   /**
-   * The roles assigned to the user.
-   * Must be a valid array of roles and is optional.
+   * The roles IDs associated with the user.
+   * Each ID must be a valid CUID.
    *
-   * @type {Role[]}
-   * @optional
+   * @type {string[]}
    */
-  @IsEnum(Role, { each: true })
-  @IsOptional()
-  roles: Role[] = [Role.Staff];
+  @IsCuid({ each: true })
+  rolesIds: string[] = [RoleId.Staff];
 }

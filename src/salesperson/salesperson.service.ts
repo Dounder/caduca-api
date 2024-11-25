@@ -5,7 +5,7 @@ import { Salesperson } from '@prisma/client';
 import { ListResponse, PaginationDto } from 'src/common';
 import { ExceptionHandler, hasRoles, ObjectManipulator } from 'src/helpers';
 import { PrismaService } from 'src/prisma/prisma.service';
-import { CurrentUser, Role } from 'src/user';
+import { CurrentUser, RoleId } from 'src/user';
 import { CreateSalespersonDto, UpdateSalespersonDto } from './dto';
 import { SalespersonResponse } from './interfaces/salesperson.interface';
 
@@ -53,7 +53,7 @@ export class SalespersonService {
   async findAll(pagination: PaginationDto, user: CurrentUser): Promise<ListResponse<SalespersonResponse>> {
     this.logger.log(`Fetching salesperson: ${JSON.stringify(pagination)}, user: ${user.username} (${user.id})`);
     const { page, limit } = pagination;
-    const isAdmin = hasRoles(user.roles, [Role.Admin]);
+    const isAdmin = hasRoles(user.roles, [RoleId.Admin]);
     const where = isAdmin ? {} : { deletedAt: null };
 
     const [data, total] = await this.prisma.$transaction([
@@ -74,7 +74,7 @@ export class SalespersonService {
   async findOne(id: string, user: CurrentUser): Promise<SalespersonResponse> {
     this.logger.log(`Fetching salesperson: ${id}, user: ${user.username} (${user.id})`);
     try {
-      const isAdmin = hasRoles(user.roles, [Role.Admin]);
+      const isAdmin = hasRoles(user.roles, [RoleId.Admin]);
       const where = isAdmin ? { id } : { id, deletedAt: null };
 
       const salesperson = await this.prisma.salesperson.findFirst({ where, include: INCLUDE_SINGLE });
@@ -94,7 +94,7 @@ export class SalespersonService {
   async findOneByCode(code: number, user: CurrentUser): Promise<SalespersonResponse> {
     this.logger.log(`Fetching salesperson by code: ${code}, user: ${user.username} (${user.id})`);
     try {
-      const isAdmin = hasRoles(user.roles, [Role.Admin]);
+      const isAdmin = hasRoles(user.roles, [RoleId.Admin]);
       const where = isAdmin ? { code } : { code, deletedAt: null };
 
       const salesperson = await this.prisma.salesperson.findFirst({ where, include: INCLUDE_SINGLE });

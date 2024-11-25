@@ -4,19 +4,14 @@ import 'customer'
 import 'salesperson'
 import 'voucher'
 
-enum Role {
-  Admin
-  Manager
-  Staff
-  Developer
-}
-
 model User extends Base {
   @@map("user")
   username              String           @unique() @db.VarChar(20)
   email                 String           @unique() @db.VarChar(50)
   password              String           @db.VarChar(100)
-  roles                 Role[]
+
+  userRoles             UserRole[]       @relation("UserRoleAssigned")
+  assignedRoles         UserRole[]       @relation("UserRoleAssigner")
 
   createdBy             User?            @relation("UserCreator", fields: [createdById], references: [id])
   creatorOf             User[]           @relation("UserCreator")
@@ -51,4 +46,31 @@ model User extends Base {
   voucherItemCreated    VoucherItem[]    @relation("VoucherItemCreator")
   voucherItemUpdated    VoucherItem[]    @relation("VoucherItemUpdater")
   voucherItemDeleted    VoucherItem[]    @relation("VoucherItemDeleter")
+}
+
+model Role {
+  @@map("role")
+  id          String     @id @default(cuid()) // Unique identifier for the role
+  name        String     @unique @db.VarChar(50) // Role name (Admin, Manager, etc.)
+  description String?    @db.VarChar(255) // Role description
+
+  userRoles   UserRole[]
+}
+
+model UserRole {
+  @@map("user_role")
+
+  id           String   @id @default(cuid())
+  assignedAt   DateTime @default(now())
+
+  user         User     @relation('UserRoleAssigned', fields: [userId], references: [id], onDelete: Cascade)
+  userId       String
+
+  role         Role     @relation(fields: [roleId], references: [id], onDelete: Restrict)
+  roleId       String
+
+  assignedBy   User?    @relation("UserRoleAssigner", fields: [assignedById], references: [id], onDelete: Restrict)
+  assignedById String?
+
+  @@unique([userId, roleId]) // Ensure a user cannot have the same role twice
 }

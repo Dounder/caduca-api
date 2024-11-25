@@ -7,52 +7,47 @@ import {
   Logger,
   NotFoundException,
 } from '@nestjs/common';
-import { User, Role } from '@prisma/client';
+import { User } from '@prisma/client';
 import * as bcrypt from 'bcrypt';
 
 import { Cache, CACHE_MANAGER } from '@nestjs/cache-manager';
 import { ListResponse, PaginationDto } from 'src/common';
-import { ExceptionHandler, hasRoles, ObjectManipulator } from 'src/helpers';
+import { ExceptionHandler, hasRoles } from 'src/helpers';
 import { PrismaService } from 'src/prisma/prisma.service';
 import { CreateUserDto, UpdateUserDto } from './dto';
-import { CurrentUser, UserResponse, UserSummary } from './interfaces';
-
-const USER_INCLUDE = {
-  createdBy: { select: { id: true, username: true, email: true } },
-  updatedBy: { select: { id: true, username: true, email: true } },
-  deletedBy: { select: { id: true, username: true, email: true } },
-};
-
-const EXCLUDE_FIELDS: (keyof User)[] = ['password', 'createdById', 'updatedById', 'deletedById'];
+import { USER_SELECT_LIST, USER_SELECT_SINGLE } from './helpers';
+import { CurrentUser, PrismaUserList, RoleId, UserResponse, UserSummary } from './interfaces';
 
 @Injectable()
 export class UserService {
   private readonly logger = new Logger(UserService.name);
-  private readonly user: PrismaService['user'];
   private readonly exHandler = new ExceptionHandler(this.logger, UserService.name);
 
   constructor(
-    private readonly prismaService: PrismaService,
+    private readonly prisma: PrismaService,
     @Inject(CACHE_MANAGER) private readonly cacheManager: Cache,
-  ) {
-    this.user = this.prismaService.user;
-  }
+  ) {}
 
   async create(createUserDto: CreateUserDto, user: CurrentUser): Promise<UserResponse> {
     try {
-      const { password, ...data } = createUserDto;
+      const { password, rolesIds, ...data } = createUserDto;
       this.logger.log(`Creating user: ${JSON.stringify(data)}`);
 
       const userPassword = password || this.generateRandomPassword();
 
       const hashedPassword = bcrypt.hashSync(userPassword, 10);
 
-      const newUser = await this.user.create({
-        data: { ...data, password: hashedPassword, createdById: user.id },
-        include: USER_INCLUDE,
+      const newUser = await this.prisma.user.create({
+        data: {
+          ...data,
+          password: hashedPassword,
+          createdById: user.id,
+          userRoles: { createMany: { data: rolesIds.map((roleId) => ({ roleId })) } },
+        },
+        select: USER_SELECT_SINGLE,
       });
 
-      const cleanUser = this.excludeFields(newUser);
+      const [cleanUser] = this.cleanUser([newUser]);
 
       this.clearCache();
 
@@ -71,49 +66,49 @@ export class UserService {
   async findAll(pagination: PaginationDto, user: CurrentUser): Promise<ListResponse<User>> {
     this.logger.log(`Fetching users: ${JSON.stringify(pagination)}, user: ${user.id} - ${user.username}`);
     const { page, limit } = pagination;
-    const isAdmin = hasRoles(user.roles, [Role.Admin]);
+    const isAdmin = hasRoles(user.roles, [RoleId.Admin]);
 
     const where = isAdmin ? {} : { deletedAt: null };
 
-    const [data, total] = await Promise.all([
-      this.user.findMany({
+    const [data, total] = await this.prisma.$transaction([
+      this.prisma.user.findMany({
         take: limit,
         skip: (page - 1) * limit,
         where,
         orderBy: { createdAt: 'desc' },
-        include: USER_INCLUDE,
+        select: USER_SELECT_LIST,
       }),
-      this.user.count({ where }),
+      this.prisma.user.count({ where }),
     ]);
 
     const lastPage = Math.ceil(total / limit);
 
     return {
       meta: { total, page, lastPage },
-      data: data.map(this.excludeFields),
+      data: this.cleanUser(data),
     };
   }
 
   async findOne(id: string, currentUser: CurrentUser): Promise<UserResponse> {
     this.logger.log(`Fetching user: ${id}, user: ${currentUser.id} - ${currentUser.username}`);
-    const isAdmin = hasRoles(currentUser.roles, [Role.Admin]);
+    const isAdmin = hasRoles(currentUser.roles, [RoleId.Admin]);
 
     const where = isAdmin ? { id } : { id, deletedAt: null };
 
-    const user = await this.user.findFirst({ where, include: USER_INCLUDE });
+    const user = await this.prisma.user.findFirst({ where, select: USER_SELECT_SINGLE });
 
     if (!user)
       throw new NotFoundException({ status: HttpStatus.NOT_FOUND, message: `[ERROR] User with id ${id} not found` });
 
-    return this.excludeFields(user);
+    return this.cleanUser([user])[0];
   }
 
   async findByUsername(username: string, currentUser: CurrentUser): Promise<UserResponse> {
     this.logger.log(`Fetching user: ${username}, user: ${currentUser.id} - ${currentUser.username}`);
-    const idAdmin = hasRoles(currentUser.roles, [Role.Admin]);
+    const idAdmin = hasRoles(currentUser.roles, [RoleId.Admin]);
     const where = idAdmin ? { username } : { username, deletedAt: null };
 
-    const user = await this.user.findFirst({ where, include: USER_INCLUDE });
+    const user = await this.prisma.user.findFirst({ where, select: USER_SELECT_SINGLE });
 
     if (!user)
       throw new NotFoundException({
@@ -121,15 +116,15 @@ export class UserService {
         message: `[ERROR] User with username ${username} not found`,
       });
 
-    return this.excludeFields(user);
+    return this.cleanUser([user])[0];
   }
 
   async findOneWithSummary(id: string, currentUser: CurrentUser): Promise<UserSummary> {
     this.logger.log(`Fetching user: ${id}, user: ${currentUser.id} - ${currentUser.username}`);
-    const idAdmin = hasRoles(currentUser.roles, [Role.Admin]);
+    const idAdmin = hasRoles(currentUser.roles, [RoleId.Admin]);
     const where = idAdmin ? { id } : { id, deletedAt: null };
 
-    const user = await this.user.findFirst({ where, select: { id: true, username: true, email: true } });
+    const user = await this.prisma.user.findFirst({ where, select: { id: true, username: true, email: true } });
 
     if (!user)
       throw new NotFoundException({ status: HttpStatus.NOT_FOUND, message: `[ERROR] User with id ${id} not found` });
@@ -140,7 +135,7 @@ export class UserService {
   async findByIds(ids: string[], currentUser: CurrentUser): Promise<UserSummary[]> {
     this.logger.log(`Fetching users: ${ids}, user: ${currentUser.id} - ${currentUser.username}`);
 
-    const data = await this.user.findMany({
+    const data = await this.prisma.user.findMany({
       where: { id: { in: ids } },
       select: { id: true, username: true, email: true },
     });
@@ -154,15 +149,15 @@ export class UserService {
 
       await this.findOne(id, currentUser);
 
-      const updatedUser = await this.user.update({
+      const updatedUser = await this.prisma.user.update({
         where: { id },
         data: { ...data, updatedById: currentUser.id },
-        include: USER_INCLUDE,
+        select: USER_SELECT_SINGLE,
       });
 
       this.clearCache();
 
-      return this.excludeFields(updatedUser);
+      return this.cleanUser([updatedUser])[0];
     } catch (error) {
       this.exHandler.process(error, 'Error updating the user');
     }
@@ -180,15 +175,15 @@ export class UserService {
           message: `[ERROR] User with id ${id} is already disabled`,
         });
 
-      const updatedUser = await this.user.update({
+      const updatedUser = await this.prisma.user.update({
         where: { id },
         data: { deletedAt: new Date(), deletedById: currentUser.id },
-        include: USER_INCLUDE,
+        select: USER_SELECT_SINGLE,
       });
 
       this.clearCache();
 
-      return this.excludeFields(updatedUser);
+      return this.cleanUser([updatedUser])[0];
     } catch (error) {
       this.exHandler.process(error, 'Error removing the user');
     }
@@ -205,15 +200,15 @@ export class UserService {
           message: `[ERROR] User with id ${id} is already enabled`,
         });
 
-      const updatedUser = await this.user.update({
+      const updatedUser = await this.prisma.user.update({
         where: { id },
         data: { deletedAt: null, deletedById: null, updatedById: currentUser.id },
-        include: USER_INCLUDE,
+        select: USER_SELECT_SINGLE,
       });
 
       this.clearCache();
 
-      return this.excludeFields(updatedUser);
+      return this.cleanUser([updatedUser])[0];
     } catch (error) {
       this.exHandler.process(error, 'Error restoring the user');
     }
@@ -231,11 +226,20 @@ export class UserService {
     return generatedPassword;
   }
 
-  private excludeFields(user: User): UserResponse {
-    return ObjectManipulator.exclude<User>(user, EXCLUDE_FIELDS) as UserResponse;
-  }
-
   private clearCache() {
     this.cacheManager.reset();
+  }
+
+  private cleanUser(users: PrismaUserList[]): UserResponse[] {
+    return users.map(({ userRoles, ...user }) => {
+      const roles = userRoles.map(({ role }) => ({ id: role.id, name: role.name }));
+      return {
+        ...user,
+        roles,
+        createdBy: user.createdBy || null,
+        updatedBy: user.updatedBy || null,
+        deletedBy: user.deletedBy || null,
+      };
+    });
   }
 }

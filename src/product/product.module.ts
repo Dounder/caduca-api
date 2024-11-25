@@ -3,7 +3,7 @@ import { ProductService } from './product.service';
 import { ProductController } from './product.controller';
 import { PrismaModule } from 'src/prisma/prisma.module';
 import { RedisModule } from 'src/redis/redis.module';
-import { AuthModule } from 'src/auth';
+import { AuthModule } from 'src/auth/auth.module';
 
 @Module({
   controllers: [ProductController],
