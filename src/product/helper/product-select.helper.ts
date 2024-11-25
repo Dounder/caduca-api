@@ -23,3 +23,18 @@ export const PRODUCT_SELECT_SINGLE = {
   updatedBy: USER_AUDIT_SELECT,
   deletedBy: USER_AUDIT_SELECT,
 };
+
+export const PRODUCT_SELECT_FROM_CODE = {
+  select: {
+    id: true,
+    name: true,
+    createdAt: true,
+    createdBy: {
+      select: {
+        id: true,
+        username: true,
+        email: true,
+      },
+    },
+  },
+};
