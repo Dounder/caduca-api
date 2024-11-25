@@ -1,12 +1,11 @@
 import { ConflictException, HttpStatus, Inject, Injectable, Logger, NotFoundException } from '@nestjs/common';
-import { ProductCode } from '@prisma/client';
 
-import { ExceptionHandler, hasRoles, ObjectManipulator } from 'src/helpers';
+import { Cache, CACHE_MANAGER } from '@nestjs/cache-manager';
+import { ExceptionHandler, hasRoles } from 'src/helpers';
 import { PrismaService } from 'src/prisma/prisma.service';
 import { CurrentUser, RoleId } from 'src/user';
 import { CreateProductCodeDto } from './dto';
 import { PRODUCT_CODE_SELECT_SINGLE } from './helpers';
-import { Cache, CACHE_MANAGER } from '@nestjs/cache-manager';
 
 @Injectable()
 export class ProductCodeService {
