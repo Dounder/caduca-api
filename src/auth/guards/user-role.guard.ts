@@ -31,6 +31,15 @@ export class UserRoleGuard implements CanActivate {
 
     if (hasRoles(user.roles, validRoles)) return true;
 
-    throw new ForbiddenException(`User ${user.username} need a valid role [${validRoles}]`);
+    // Map RoleId enums to their string names
+    const roleNames = validRoles.map((roleId) => {
+      for (const [key, value] of Object.entries(RoleId)) if (value === roleId) return key;
+
+      return roleId; // Fallback to the ID if no match found
+    });
+
+    throw new ForbiddenException(
+      `User ${user.username} need a valid role [${roleNames.join(', ')}] to access this resource`,
+    );
   }
 }
