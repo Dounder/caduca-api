@@ -4,6 +4,7 @@ import {
   ForbiddenException,
   Injectable,
   InternalServerErrorException,
+  Logger,
 } from '@nestjs/common';
 import { Reflector } from '@nestjs/core';
 import { Observable } from 'rxjs';
@@ -14,6 +15,7 @@ import { hasRoles } from 'src/helpers';
 
 @Injectable()
 export class UserRoleGuard implements CanActivate {
+  private readonly logger = new Logger(UserRoleGuard.name);
   constructor(private readonly reflector: Reflector) {}
 
   canActivate(context: ExecutionContext): boolean | Promise<boolean> | Observable<boolean> {
@@ -22,14 +24,22 @@ export class UserRoleGuard implements CanActivate {
       context.getClass(),
     ]);
 
-    if (!validRoles || validRoles.length === 0) return true;
+    if (!validRoles || validRoles.length === 0) {
+      this.logger.log(`No roles found for this route, allowing access to everyone`);
+      return true;
+    }
 
     const user: CurrentUser = context.switchToHttp().getRequest().user;
 
-    if (!user)
+    if (!user) {
+      this.logger.error(`No user inside the request, make sure that we used the AuthGuard`);
       throw new InternalServerErrorException(`No user inside the request, make sure that we used the AuthGuard`);
+    }
 
-    if (hasRoles(user.roles, validRoles)) return true;
+    if (hasRoles(user.roles, validRoles)) {
+      this.logger.log(`User ${user.username} has the required roles to access this resource`);
+      return true;
+    }
 
     // Map RoleId enums to their string names
     const roleNames = validRoles.map((roleId) => {
@@ -38,6 +48,7 @@ export class UserRoleGuard implements CanActivate {
       return roleId; // Fallback to the ID if no match found
     });
 
+    this.logger.error(`User ${user.username} need a valid role [${roleNames.join(', ')}] to access this resource`);
     throw new ForbiddenException(
       `User ${user.username} need a valid role [${roleNames.join(', ')}] to access this resource`,
     );
