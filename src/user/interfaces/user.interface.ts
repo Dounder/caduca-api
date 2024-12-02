@@ -33,8 +33,8 @@ export interface UserResponse {
   updatedAt: Date | null;
   deletedAt: Date | null;
   createdBy: UserSummary | null;
-  updatedBy: UserSummary | null;
-  deletedBy: UserSummary | null;
+  updatedBy?: UserSummary | null;
+  deletedBy?: UserSummary | null;
   password?: string;
 }
 

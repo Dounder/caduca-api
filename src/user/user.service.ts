@@ -236,9 +236,6 @@ export class UserService {
       return {
         ...user,
         roles,
-        createdBy: user.createdBy || null,
-        updatedBy: user.updatedBy || null,
-        deletedBy: user.deletedBy || null,
       };
     });
   }
