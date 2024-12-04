@@ -1,13 +1,14 @@
-import { Body, Controller, Delete, Get, Inject, Param, ParseIntPipe, Patch, Post } from '@nestjs/common';
+import { Body, Controller, Delete, Get, Inject, Param, ParseIntPipe, Patch, Post, Query } from '@nestjs/common';
 
 import { Cache, CACHE_MANAGER } from '@nestjs/cache-manager';
 import { Auth, GetUser } from 'src/auth';
-import { ParseCuidPipe } from 'src/common';
+import { PaginationDto, ParseCuidPipe } from 'src/common';
 import { CurrentUser, RoleId } from 'src/user';
 import { CreateProductCodeDto } from './dto';
 import { ProductCodeService } from './product-code.service';
 
 @Controller('product/code')
+@Auth()
 export class ProductCodeController {
   constructor(
     private readonly productCodeService: ProductCodeService,
@@ -18,6 +19,12 @@ export class ProductCodeController {
   @Auth(RoleId.Admin, RoleId.Manager, RoleId.Developer)
   create(@Body() createProductCodeDto: CreateProductCodeDto, @GetUser() user: CurrentUser) {
     return this.productCodeService.create(createProductCodeDto, user);
+  }
+
+  @Get('all')
+  findAll(@Query() pagination: PaginationDto, @GetUser() user: CurrentUser) {
+    const cacheKey = `product_codes:page:${pagination.page}:limit:${pagination.limit}`;
+    return this.getCachedResponse(cacheKey, () => this.productCodeService.findAll({ pagination, user }));
   }
 
   @Get('clear_cache')

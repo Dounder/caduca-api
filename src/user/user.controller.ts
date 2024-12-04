@@ -29,7 +29,13 @@ export class UserController {
   @Get()
   findAll(@Query() pagination: PaginationDto, @GetUser() user: CurrentUser): Promise<ListResponse<User>> {
     const cacheKey = `user:page:${pagination.page}:limit:${pagination.limit}`;
-    return this.getCachedResponse(cacheKey, () => this.usersService.findAll(pagination, user));
+    return this.getCachedResponse(cacheKey, () => this.usersService.findAll({ pagination, user }));
+  }
+
+  @Get('all/summary')
+  findAllSummary(@Query() pagination: PaginationDto, @GetUser() user: CurrentUser): Promise<ListResponse<UserSummary>> {
+    const cacheKey = `user:summary:page:${pagination.page}:limit:${pagination.limit}`;
+    return this.getCachedResponse(cacheKey, () => this.usersService.findAll({ pagination, user, summary: true }));
   }
 
   @Get(':id')

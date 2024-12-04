@@ -2,12 +2,12 @@ import { ConflictException, HttpStatus, Inject, Injectable, Logger, NotFoundExce
 import { Prisma, Product } from '@prisma/client';
 
 import { Cache, CACHE_MANAGER } from '@nestjs/cache-manager';
-import { PaginationDto } from 'src/common';
+import { FindAllParams, PaginationDto } from 'src/common';
 import { ExceptionHandler, hasRoles } from 'src/helpers';
 import { PrismaService } from 'src/prisma/prisma.service';
 import { CurrentUser, RoleId } from 'src/user';
 import { CreateProductDto, UpdateProductDto } from './dto';
-import { PRODUCT_SELECT_LIST, PRODUCT_SELECT_SINGLE } from './helper';
+import { PRODUCT_SELECT_LIST, PRODUCT_SELECT_LIST_SUMMARY, PRODUCT_SELECT_SINGLE } from './helper';
 
 @Injectable()
 export class ProductService {
@@ -40,7 +40,7 @@ export class ProductService {
     }
   }
 
-  async findAll(pagination: PaginationDto, user: CurrentUser) {
+  async findAll({ pagination, user, summary = false }: FindAllParams) {
     this.logger.log(`Fetching products: ${JSON.stringify(pagination)}, user: ${user.username} (${user.id})`);
     const { page, limit } = pagination;
     const isAdmin = hasRoles(user.roles, [RoleId.Admin]);
@@ -51,7 +51,7 @@ export class ProductService {
         take: limit,
         skip: (page - 1) * limit,
         where,
-        select: PRODUCT_SELECT_LIST,
+        select: summary ? PRODUCT_SELECT_LIST_SUMMARY : PRODUCT_SELECT_LIST,
         orderBy: { createdAt: Prisma.SortOrder.desc },
       }),
       this.prisma.product.count({ where }),

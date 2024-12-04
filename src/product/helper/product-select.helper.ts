@@ -38,3 +38,12 @@ export const PRODUCT_SELECT_FROM_CODE = {
     },
   },
 };
+
+export const PRODUCT_SELECT_FROM_CODE_SUMMARY = {
+  select: { id: true, name: true },
+};
+
+export const PRODUCT_SELECT_LIST_SUMMARY = {
+  id: true,
+  name: true,
+};

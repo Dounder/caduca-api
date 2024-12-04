@@ -27,3 +27,9 @@ export const USER_SELECT_SINGLE_PWD = {
   ...USER_SELECT_SINGLE,
   password: true,
 };
+
+export const USER_SELECT_LIST_SUMMARY = {
+  id: true,
+  username: true,
+  email: true,
+};

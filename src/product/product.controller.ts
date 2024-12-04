@@ -23,7 +23,13 @@ export class ProductController {
   @Get()
   findAll(@Query() pagination: PaginationDto, @GetUser() user: CurrentUser) {
     const cacheKey = `product:page:${pagination.page}:limit:${pagination.limit}`;
-    return this.getCachedResponse(cacheKey, () => this.productService.findAll(pagination, user));
+    return this.getCachedResponse(cacheKey, () => this.productService.findAll({ pagination, user }));
+  }
+
+  @Get('all/summary')
+  findAllSummary(@Query() pagination: PaginationDto, @GetUser() user: CurrentUser) {
+    const cacheKey = `product:summary:page:${pagination.page}:limit:${pagination.limit}`;
+    return this.getCachedResponse(cacheKey, () => this.productService.findAll({ pagination, user, summary: true }));
   }
 
   @Get('clear_cache')

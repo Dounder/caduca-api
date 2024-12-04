@@ -11,11 +11,11 @@ import { User } from '@prisma/client';
 import * as bcrypt from 'bcrypt';
 
 import { Cache, CACHE_MANAGER } from '@nestjs/cache-manager';
-import { ListResponse, PaginationDto } from 'src/common';
+import { FindAllParams, ListResponse, PaginationDto } from 'src/common';
 import { ExceptionHandler, hasRoles } from 'src/helpers';
 import { PrismaService } from 'src/prisma/prisma.service';
 import { CreateUserDto, UpdateUserDto } from './dto';
-import { USER_SELECT_LIST, USER_SELECT_SINGLE } from './helpers';
+import { USER_SELECT_LIST, USER_SELECT_LIST_SUMMARY, USER_SELECT_SINGLE } from './helpers';
 import { CurrentUser, PrismaUserList, RoleId, UserResponse, UserSummary } from './interfaces';
 
 @Injectable()
@@ -63,8 +63,10 @@ export class UserService {
     }
   }
 
-  async findAll(pagination: PaginationDto, user: CurrentUser): Promise<ListResponse<User>> {
-    this.logger.log(`Fetching users: ${JSON.stringify(pagination)}, user: ${user.id} - ${user.username}`);
+  async findAll({ pagination, user, summary = false }: FindAllParams): Promise<ListResponse<User>> {
+    this.logger.log(
+      `Fetching users${summary && ' (summary)'}: ${JSON.stringify(pagination)}, user: ${user.id} - ${user.username}`,
+    );
     const { page, limit } = pagination;
     const isAdmin = hasRoles(user.roles, [RoleId.Admin]);
 
@@ -76,7 +78,7 @@ export class UserService {
         skip: (page - 1) * limit,
         where,
         orderBy: { createdAt: 'desc' },
-        select: USER_SELECT_LIST,
+        select: summary ? USER_SELECT_LIST_SUMMARY : USER_SELECT_LIST,
       }),
       this.prisma.user.count({ where }),
     ]);
@@ -85,7 +87,7 @@ export class UserService {
 
     return {
       meta: { total, page, lastPage },
-      data: this.cleanUser(data),
+      data: summary ? data : this.cleanUser(data as PrismaUserList[]),
     };
   }
 

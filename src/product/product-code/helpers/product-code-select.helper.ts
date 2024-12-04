@@ -1,4 +1,4 @@
-import { PRODUCT_SELECT_FROM_CODE } from 'src/product/helper';
+import { PRODUCT_SELECT_FROM_CODE, PRODUCT_SELECT_FROM_CODE_SUMMARY } from 'src/product/helper';
 import { USER_AUDIT_SELECT } from 'src/user';
 
 export const PRODUCT_CODE_SELECT_SUMMARY = {
@@ -8,14 +8,24 @@ export const PRODUCT_CODE_SELECT_SUMMARY = {
   },
 };
 
-export const PRODUCT_CODE_SELECT_SINGLE = {
+export const PRODUCT_CODE_SELECT_LIST = {
   id: true,
+  code: true,
+  product: PRODUCT_SELECT_FROM_CODE_SUMMARY,
   createdAt: true,
   updatedAt: true,
   deletedAt: true,
-  code: true,
-  product: PRODUCT_SELECT_FROM_CODE,
   createdBy: USER_AUDIT_SELECT,
+};
+
+export const PRODUCT_CODE_SELECT_LIST_SUMMARY = {
+  id: true,
+  code: true,
+  product: PRODUCT_SELECT_FROM_CODE_SUMMARY,
+};
+
+export const PRODUCT_CODE_SELECT_SINGLE = {
+  ...PRODUCT_CODE_SELECT_LIST,
   updatedBy: USER_AUDIT_SELECT,
   deletedBy: USER_AUDIT_SELECT,
 };

@@ -1,4 +1,5 @@
-import { UserSummary } from 'src/user';
+import { CurrentUser, UserSummary } from 'src/user';
+import { PaginationDto } from '../dto';
 
 export interface ListResponse<T> {
   meta: ListResponseMeta;
@@ -20,4 +21,10 @@ export interface BaseResponse {
   createdBy: UserSummary | null;
   updatedBy: UserSummary | null;
   deletedBy: UserSummary | null;
+}
+
+export interface FindAllParams {
+  pagination: PaginationDto;
+  user: CurrentUser;
+  summary?: boolean;
 }

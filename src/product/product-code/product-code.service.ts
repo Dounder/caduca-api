@@ -1,11 +1,13 @@
 import { ConflictException, HttpStatus, Inject, Injectable, Logger, NotFoundException } from '@nestjs/common';
 
 import { Cache, CACHE_MANAGER } from '@nestjs/cache-manager';
+import { Prisma } from '@prisma/client';
+import { FindAllParams } from 'src/common';
 import { ExceptionHandler, hasRoles } from 'src/helpers';
 import { PrismaService } from 'src/prisma/prisma.service';
 import { CurrentUser, RoleId } from 'src/user';
 import { CreateProductCodeDto } from './dto';
-import { PRODUCT_CODE_SELECT_SINGLE } from './helpers';
+import { PRODUCT_CODE_SELECT_LIST, PRODUCT_CODE_SELECT_LIST_SUMMARY, PRODUCT_CODE_SELECT_SINGLE } from './helpers';
 
 @Injectable()
 export class ProductCodeService {
@@ -33,6 +35,28 @@ export class ProductCodeService {
     } catch (error) {
       this.exHandler.process(error);
     }
+  }
+
+  async findAll({ pagination, user, summary = false }: FindAllParams) {
+    this.logger.log(`Fetching code products: ${JSON.stringify(pagination)}, user: ${user.username} (${user.id})`);
+    const { page, limit } = pagination;
+    const isAdmin = hasRoles(user.roles, [RoleId.Admin]);
+    const where = isAdmin ? {} : { deletedAt: null };
+
+    const [data, total] = await this.prisma.$transaction([
+      this.prisma.productCode.findMany({
+        take: limit,
+        skip: (page - 1) * limit,
+        where,
+        select: summary ? PRODUCT_CODE_SELECT_LIST_SUMMARY : PRODUCT_CODE_SELECT_LIST,
+        orderBy: { createdAt: Prisma.SortOrder.desc },
+      }),
+      this.prisma.product.count({ where }),
+    ]);
+
+    const lastPage = Math.ceil(total / limit);
+
+    return { meta: { total, page, lastPage }, data };
   }
 
   async findByCode(code: number, user: CurrentUser) {

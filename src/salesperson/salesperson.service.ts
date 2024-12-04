@@ -1,23 +1,13 @@
 import { Cache, CACHE_MANAGER } from '@nestjs/cache-manager';
 import { ConflictException, HttpStatus, Inject, Injectable, Logger, NotFoundException } from '@nestjs/common';
-import { Salesperson } from '@prisma/client';
 
-import { ListResponse, PaginationDto } from 'src/common';
-import { ExceptionHandler, hasRoles, ObjectManipulator } from 'src/helpers';
+import { FindAllParams, ListResponse } from 'src/common';
+import { ExceptionHandler, hasRoles } from 'src/helpers';
 import { PrismaService } from 'src/prisma/prisma.service';
 import { CurrentUser, RoleId } from 'src/user';
 import { CreateSalespersonDto, UpdateSalespersonDto } from './dto';
+import { SALESPERSON_SELECT_LIST, SALESPERSON_SELECT_LIST_SUMMARY, SALESPERSON_SELECT_SINGLE } from './helper';
 import { SalespersonResponse } from './interfaces/salesperson.interface';
-
-const EXCLUDE_FIELDS: (keyof Salesperson)[] = ['createdById', 'updatedById', 'deletedById'];
-const INCLUDE_LIST = {
-  createdBy: { select: { id: true, username: true, email: true } },
-};
-const INCLUDE_SINGLE = {
-  ...INCLUDE_LIST,
-  updatedBy: { select: { id: true, username: true, email: true } },
-  deletedBy: { select: { id: true, username: true, email: true } },
-};
 
 @Injectable()
 export class SalespersonService {
@@ -39,18 +29,18 @@ export class SalespersonService {
           createdBy: { connect: { id: user.id } },
           logs: { create: { message, createdBy: { connect: { id: user.id } } } },
         },
-        include: INCLUDE_SINGLE,
+        select: SALESPERSON_SELECT_SINGLE,
       });
 
       await this.cacheManager.reset();
 
-      return this.excludeFields(salesperson);
+      return salesperson;
     } catch (error) {
       this.exHandler.process(error);
     }
   }
 
-  async findAll(pagination: PaginationDto, user: CurrentUser): Promise<ListResponse<SalespersonResponse>> {
+  async findAll({ pagination, user, summary = false }: FindAllParams): Promise<ListResponse<SalespersonResponse>> {
     this.logger.log(`Fetching salesperson: ${JSON.stringify(pagination)}, user: ${user.username} (${user.id})`);
     const { page, limit } = pagination;
     const isAdmin = hasRoles(user.roles, [RoleId.Admin]);
@@ -61,14 +51,14 @@ export class SalespersonService {
         take: limit,
         skip: (page - 1) * limit,
         where,
-        include: INCLUDE_LIST,
+        select: summary ? SALESPERSON_SELECT_LIST_SUMMARY : SALESPERSON_SELECT_LIST,
       }),
       this.prisma.salesperson.count({ where }),
     ]);
 
     const lastPage = Math.ceil(total / limit);
 
-    return { meta: { total, page, lastPage }, data: data.map(this.excludeFields) };
+    return { meta: { total, page, lastPage }, data };
   }
 
   async findOne(id: string, user: CurrentUser): Promise<SalespersonResponse> {
@@ -77,7 +67,7 @@ export class SalespersonService {
       const isAdmin = hasRoles(user.roles, [RoleId.Admin]);
       const where = isAdmin ? { id } : { id, deletedAt: null };
 
-      const salesperson = await this.prisma.salesperson.findFirst({ where, include: INCLUDE_SINGLE });
+      const salesperson = await this.prisma.salesperson.findFirst({ where, select: SALESPERSON_SELECT_SINGLE });
 
       if (!salesperson)
         throw new NotFoundException({
@@ -85,7 +75,7 @@ export class SalespersonService {
           message: `[ERROR] Salesperson with id ${id} not found`,
         });
 
-      return this.excludeFields(salesperson);
+      return salesperson;
     } catch (error) {
       this.exHandler.process(error);
     }
@@ -97,7 +87,7 @@ export class SalespersonService {
       const isAdmin = hasRoles(user.roles, [RoleId.Admin]);
       const where = isAdmin ? { code } : { code, deletedAt: null };
 
-      const salesperson = await this.prisma.salesperson.findFirst({ where, include: INCLUDE_SINGLE });
+      const salesperson = await this.prisma.salesperson.findFirst({ where, select: SALESPERSON_SELECT_SINGLE });
 
       if (!salesperson)
         throw new NotFoundException({
@@ -105,7 +95,7 @@ export class SalespersonService {
           message: `[ERROR] Salesperson with code ${code} not found`,
         });
 
-      return this.excludeFields(salesperson);
+      return salesperson;
     } catch (error) {
       this.exHandler.process(error);
     }
@@ -124,12 +114,12 @@ export class SalespersonService {
           updatedBy: { connect: { id: user.id } },
           logs: { create: { message, createdBy: { connect: { id: user.id } } } },
         },
-        include: INCLUDE_SINGLE,
+        select: SALESPERSON_SELECT_SINGLE,
       });
 
       await this.clearCache();
 
-      return this.excludeFields(updatedSalesperson);
+      return updatedSalesperson;
     } catch (error) {
       this.exHandler.process(error);
     }
@@ -154,12 +144,12 @@ export class SalespersonService {
           logs: { create: { message, createdBy: { connect: { id: user.id } } } },
           deletedAt: new Date(),
         },
-        include: INCLUDE_SINGLE,
+        select: SALESPERSON_SELECT_SINGLE,
       });
 
       await this.cacheManager.reset();
 
-      return this.excludeFields(deletedSalesperson);
+      return deletedSalesperson;
     } catch (error) {
       this.exHandler.process(error);
     }
@@ -184,19 +174,15 @@ export class SalespersonService {
           logs: { create: { message, createdBy: { connect: { id: user.id } } } },
           deletedAt: null,
         },
-        include: INCLUDE_SINGLE,
+        select: SALESPERSON_SELECT_SINGLE,
       });
 
       await this.clearCache();
 
-      return this.excludeFields(restoredSalesperson);
+      return restoredSalesperson;
     } catch (error) {
       this.exHandler.process(error);
     }
-  }
-
-  private excludeFields(data: Salesperson): SalespersonResponse {
-    return ObjectManipulator.exclude<Salesperson>(data, EXCLUDE_FIELDS) as SalespersonResponse;
   }
 
   private async clearCache() {

@@ -23,7 +23,13 @@ export class SalespersonController {
   findAll(@Query() pagination: PaginationDto, @GetUser() user: CurrentUser) {
     const key = `salesperson:page:${pagination.page}:limit:${pagination.limit}`;
 
-    return this.getCachedResponse(key, () => this.salespersonService.findAll(pagination, user));
+    return this.getCachedResponse(key, () => this.salespersonService.findAll({ pagination, user }));
+  }
+
+  @Get('all/summary')
+  findAllSummary(@Query() pagination: PaginationDto, @GetUser() user: CurrentUser) {
+    const cacheKey = `salesperson:summary:page:${pagination.page}:limit:${pagination.limit}`;
+    return this.getCachedResponse(cacheKey, () => this.salespersonService.findAll({ pagination, user, summary: true }));
   }
 
   @Get(':id')

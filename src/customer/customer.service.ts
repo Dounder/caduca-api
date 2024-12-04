@@ -2,12 +2,12 @@ import { Cache, CACHE_MANAGER } from '@nestjs/cache-manager';
 import { ConflictException, HttpStatus, Inject, Injectable, Logger, NotFoundException } from '@nestjs/common';
 import { Customer } from '@prisma/client';
 
-import { ListResponse, PaginationDto } from 'src/common';
+import { FindAllParams, ListResponse, PaginationDto } from 'src/common';
 import { ExceptionHandler, hasRoles } from 'src/helpers';
 import { PrismaService } from 'src/prisma/prisma.service';
 import { CurrentUser, RoleId } from 'src/user';
 import { CreateCustomerDto, UpdateCustomerDto } from './dto';
-import { CUSTOMER_SELECT_LIST, CUSTOMER_SELECT_SINGLE } from './helper';
+import { CUSTOMER_SELECT_LIST, CUSTOMER_SELECT_LIST_SUMMARY, CUSTOMER_SELECT_SINGLE } from './helper';
 
 @Injectable()
 export class CustomerService {
@@ -40,7 +40,7 @@ export class CustomerService {
     }
   }
 
-  async findAll(pagination: PaginationDto, user: CurrentUser): Promise<ListResponse<Customer>> {
+  async findAll({ pagination, user, summary = false }: FindAllParams): Promise<ListResponse<Customer>> {
     this.logger.log(`Fetching customers: ${JSON.stringify(pagination)}, user: ${user.username} (${user.id})`);
     const { page, limit } = pagination;
     const isAdmin = hasRoles(user.roles, [RoleId.Admin]);
@@ -51,7 +51,7 @@ export class CustomerService {
         take: limit,
         skip: (page - 1) * limit,
         where,
-        select: CUSTOMER_SELECT_LIST,
+        select: summary ? CUSTOMER_SELECT_LIST_SUMMARY : CUSTOMER_SELECT_LIST,
       }),
       this.prisma.customer.count({ where }),
     ]);
