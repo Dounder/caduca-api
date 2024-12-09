@@ -66,13 +66,14 @@ model Role {
 }
 
 model UserRole {
-  id           String   @id() @default(cuid())
-  assignedAt   DateTime @default(now())
-  user         User     @relation("UserRoleAssigned", fields: [userId], references: [id], onDelete: Cascade)
+  id           String    @id() @default(cuid())
+  assignedAt   DateTime  @default(now())
+  deletedAt    DateTime?
+  user         User      @relation("UserRoleAssigned", fields: [userId], references: [id], onDelete: Cascade)
   userId       String
-  role         Role     @relation(fields: [roleId], references: [id], onDelete: Restrict)
+  role         Role      @relation(fields: [roleId], references: [id], onDelete: Restrict)
   roleId       String
-  assignedBy   User?    @relation("UserRoleAssigner", fields: [assignedById], references: [id], onDelete: Restrict)
+  assignedBy   User?     @relation("UserRoleAssigner", fields: [assignedById], references: [id], onDelete: Restrict)
   assignedById String?
 
   @@unique([userId, roleId])

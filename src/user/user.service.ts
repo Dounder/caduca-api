@@ -30,8 +30,10 @@ export class UserService {
 
   async create(createUserDto: CreateUserDto, user: CurrentUser): Promise<UserResponse> {
     try {
-      const { password, rolesIds, ...data } = createUserDto;
-      this.logger.log(`Creating user: ${JSON.stringify(data)}`);
+      const { password, roles, ...data } = createUserDto;
+      this.logger.log(`Creating user: ${JSON.stringify({ ...data, roles })}`);
+
+      if (roles.length === 0) roles.push(RoleId.Staff);
 
       const userPassword = password || this.generateRandomPassword();
 
@@ -42,7 +44,7 @@ export class UserService {
           ...data,
           password: hashedPassword,
           createdById: user.id,
-          userRoles: { createMany: { data: rolesIds.map((roleId) => ({ roleId })) } },
+          userRoles: { createMany: { data: roles.map((roleId) => ({ roleId })) } },
         },
         select: USER_SELECT_SINGLE,
       });
@@ -149,11 +151,17 @@ export class UserService {
     try {
       this.logger.log(`Updating user: ${JSON.stringify(data)}, user: ${currentUser.id} - ${currentUser.username}`);
 
+      // Ensure user exists
       await this.findOne(id, currentUser);
+      const { email, username, roles } = data;
 
+      // Handle roles separately
+      if (roles) await this.updateUserRoles(id, roles, currentUser);
+
+      // Update the user
       const updatedUser = await this.prisma.user.update({
         where: { id },
-        data: { ...data, updatedById: currentUser.id },
+        data: { email, username, updatedById: currentUser.id },
         select: USER_SELECT_SINGLE,
       });
 
@@ -163,6 +171,81 @@ export class UserService {
     } catch (error) {
       this.exHandler.process(error, 'Error updating the user');
     }
+  }
+
+  private async updateUserRoles(userId: string, newRoles: string[], currentUser: CurrentUser): Promise<void> {
+    // If newRoles are empty, set a default role
+    if (newRoles.length === 0) newRoles.push(RoleId.Staff);
+
+    // Begin transaction for atomicity
+    await this.prisma.$transaction(async (tx) => {
+      const existingRoles = await tx.userRole.findMany({
+        where: { userId, deletedAt: null },
+      });
+
+      const existingRoleIds = existingRoles.map((role) => role.roleId);
+
+      // Roles to remove (logical delete)
+      const rolesToRemove = existingRoleIds.filter((roleId) => !newRoles.includes(roleId));
+      if (rolesToRemove.length > 0) {
+        this.logger.log(`Roles to remove for user ${userId}: ${JSON.stringify(rolesToRemove)}`);
+        await tx.userRole.updateMany({
+          where: { userId, roleId: { in: rolesToRemove }, deletedAt: null },
+          data: { deletedAt: new Date() },
+        });
+      }
+
+      // Roles to potentially add or restore
+      const rolesToAdd = newRoles.filter((roleId) => !existingRoleIds.includes(roleId));
+      if (rolesToAdd.length > 0) {
+        this.logger.log(`Attempting to add roles for user ${userId}: ${JSON.stringify(rolesToAdd)}`);
+
+        // Check if any roles to add were previously assigned (but now deleted)
+        const previouslyDeletedRoles = await tx.userRole.findMany({
+          where: {
+            userId,
+            roleId: { in: rolesToAdd },
+            deletedAt: { not: null },
+          },
+        });
+
+        const previouslyDeletedRoleIds = previouslyDeletedRoles.map((r) => r.roleId);
+
+        // Restore previously deleted roles
+        if (previouslyDeletedRoleIds.length > 0) {
+          this.logger.log(
+            `Restoring previously deleted roles for user ${userId}: ${JSON.stringify(previouslyDeletedRoleIds)}`,
+          );
+          await tx.userRole.updateMany({
+            where: {
+              userId,
+              roleId: { in: previouslyDeletedRoleIds },
+            },
+            data: {
+              deletedAt: null,
+              // Optionally update assignedById and assignedAt if you want to reflect the re-assignment
+              assignedById: currentUser.id,
+              assignedAt: new Date(),
+            },
+          });
+        }
+
+        // Create new roles that were never assigned before
+        const newUnseenRoleIds = rolesToAdd.filter((roleId) => !previouslyDeletedRoleIds.includes(roleId));
+        if (newUnseenRoleIds.length > 0) {
+          this.logger.log(
+            `Creating brand new role assignments for user ${userId}: ${JSON.stringify(newUnseenRoleIds)}`,
+          );
+          const newRoleRecords = newUnseenRoleIds.map((roleId) => ({
+            userId,
+            roleId,
+            assignedById: currentUser.id,
+            assignedAt: new Date(),
+          }));
+          await tx.userRole.createMany({ data: newRoleRecords });
+        }
+      }
+    });
   }
 
   async remove(id: string, currentUser: CurrentUser): Promise<UserResponse> {

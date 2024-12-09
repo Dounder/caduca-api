@@ -1,6 +1,6 @@
-import { Role } from '@prisma/client';
 import { Transform } from 'class-transformer';
-import { IsEmail, IsEnum, IsOptional, IsString, IsStrongPassword, IsUUID, MinLength } from 'class-validator';
+import { IsArray, IsEmail, IsEnum, IsOptional, IsString, MinLength } from 'class-validator';
+import { RoleId } from '../interfaces';
 
 /**
  * Data Transfer Object (DTO) for updating a user's information.
@@ -32,4 +32,9 @@ export class UpdateUserDto {
   @Transform(({ value }) => value.trim().toLowerCase())
   @IsOptional()
   email?: string;
+
+  @IsArray()
+  @IsEnum(RoleId, { each: true }) // Ensure all roles are valid RoleIds
+  @IsOptional()
+  roles?: RoleId[];
 }
