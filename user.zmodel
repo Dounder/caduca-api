@@ -8,7 +8,7 @@ model User extends Base {
   @@map("user")
   username              String           @unique() @db.VarChar(20)
   email                 String           @unique() @db.VarChar(50)
-  password              String           @db.VarChar(100)
+  password              String           @db.VarChar(256)
 
   userRoles             UserRole[]       @relation("UserRoleAssigned")
   assignedRoles         UserRole[]       @relation("UserRoleAssigner")
