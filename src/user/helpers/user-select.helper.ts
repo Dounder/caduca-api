@@ -10,7 +10,7 @@ export const USER_SELECT_LIST = {
   id: true,
   username: true,
   email: true,
-  userRoles: { select: { role: { select: { id: true, name: true } } } },
+  userRoles: { select: { role: { select: { id: true, name: true } } }, where: { deletedAt: null } },
   createdAt: true,
   updatedAt: true,
   deletedAt: true,

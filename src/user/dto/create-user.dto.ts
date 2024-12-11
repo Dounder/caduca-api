@@ -1,5 +1,5 @@
 import { Transform } from 'class-transformer';
-import { IsEmail, IsOptional, IsString, IsStrongPassword, MinLength } from 'class-validator';
+import { IsArray, IsEmail, IsEnum, IsOptional, IsString, IsStrongPassword, MinLength } from 'class-validator';
 import { RoleId } from '../interfaces';
 import { IsCuid } from 'src/common';
 
@@ -45,12 +45,8 @@ export class CreateUserDto {
   @IsOptional()
   password?: string;
 
-  /**
-   * The roles IDs associated with the user.
-   * Each ID must be a valid CUID.
-   *
-   * @type {string[]}
-   */
-  @IsCuid({ each: true })
-  rolesIds: string[] = [RoleId.Staff];
+  @IsArray()
+  @IsEnum(RoleId, { each: true }) // Ensure all roles are valid RoleIds
+  @IsOptional()
+  roles?: RoleId[] = [RoleId.Staff];
 }

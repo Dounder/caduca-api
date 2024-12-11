@@ -8,7 +8,6 @@ export const SALESPERSON_SELECT_LIST = {
   id: true,
   code: true,
   name: true,
-  address: true,
   createdAt: true,
   updatedAt: true,
   deletedAt: true,

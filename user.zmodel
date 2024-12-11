@@ -8,7 +8,7 @@ model User extends Base {
   @@map("user")
   username              String           @unique() @db.VarChar(20)
   email                 String           @unique() @db.VarChar(50)
-  password              String           @db.VarChar(100)
+  password              String           @db.VarChar(256)
 
   userRoles             UserRole[]       @relation("UserRoleAssigned")
   assignedRoles         UserRole[]       @relation("UserRoleAssigner")
@@ -60,16 +60,17 @@ model Role {
 model UserRole {
   @@map("user_role")
 
-  id           String   @id @default(cuid())
-  assignedAt   DateTime @default(now())
+  id           String    @id @default(cuid())
+  assignedAt   DateTime  @default(now())
+  deletedAt    DateTime?
 
-  user         User     @relation('UserRoleAssigned', fields: [userId], references: [id], onDelete: Cascade)
+  user         User      @relation('UserRoleAssigned', fields: [userId], references: [id], onDelete: Cascade)
   userId       String
 
-  role         Role     @relation(fields: [roleId], references: [id], onDelete: Restrict)
+  role         Role      @relation(fields: [roleId], references: [id], onDelete: Restrict)
   roleId       String
 
-  assignedBy   User?    @relation("UserRoleAssigner", fields: [assignedById], references: [id], onDelete: Restrict)
+  assignedBy   User?     @relation("UserRoleAssigner", fields: [assignedById], references: [id], onDelete: Restrict)
   assignedById String?
 
   @@unique([userId, roleId]) // Ensure a user cannot have the same role twice
