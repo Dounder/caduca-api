@@ -1,5 +1,4 @@
 import { USER_AUDIT_SELECT } from 'src/user';
-import { PRODUCT_CODE_SELECT_SUMMARY } from 'src/product/product-code/helpers';
 
 export const PRODUCT_SELECT_SUMMARY = {
   select: {
@@ -11,7 +10,6 @@ export const PRODUCT_SELECT_SUMMARY = {
 export const PRODUCT_SELECT_LIST = {
   id: true,
   name: true,
-  codes: PRODUCT_CODE_SELECT_SUMMARY,
   createdAt: true,
   updatedAt: true,
   deletedAt: true,
@@ -20,6 +18,7 @@ export const PRODUCT_SELECT_LIST = {
 
 export const PRODUCT_SELECT_SINGLE = {
   ...PRODUCT_SELECT_LIST,
+  codes: { select: { id: true, code: true } },
   updatedBy: USER_AUDIT_SELECT,
   deletedBy: USER_AUDIT_SELECT,
 };
