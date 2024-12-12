@@ -9,6 +9,12 @@ import { CurrentUser, RoleId } from 'src/user';
 import { CreateProductDto, UpdateProductDto } from './dto';
 import { PRODUCT_SELECT_LIST, PRODUCT_SELECT_LIST_SUMMARY, PRODUCT_SELECT_SINGLE } from './helper';
 
+interface FindOneProps {
+  id: string;
+  user: CurrentUser;
+  slug?: boolean;
+}
+
 @Injectable()
 export class ProductService {
   private readonly logger = new Logger(ProductService.name);
@@ -73,18 +79,18 @@ export class ProductService {
     return { meta: { total, page, lastPage }, data };
   }
 
-  async findOne(id: string, user: CurrentUser) {
-    this.logger.log(`Fetching product: ${id}, user: ${user.username} (${user.id})`);
+  async findOne({ id, user, slug }: FindOneProps) {
+    this.logger.log(`Fetching product by ${slug ? 'slug' : 'id'}: ${id}, user: ${user.username} (${user.id})`);
     try {
       const isAdmin = hasRoles(user.roles, [RoleId.Admin]);
-      const where = isAdmin ? { id } : { id, deletedAt: null };
+      const where = isAdmin ? { [slug ? 'slug' : 'id']: id } : { [slug ? 'slug' : 'id']: id, deletedAt: null };
 
       const product = await this.prisma.product.findFirst({ where, select: PRODUCT_SELECT_SINGLE });
 
       if (!product)
         throw new NotFoundException({
           status: HttpStatus.NOT_FOUND,
-          message: `[ERROR] Product with id ${id} not found`,
+          message: `[ERROR] Product with ${slug ? 'slug' : 'id'} ${id} not found`,
         });
 
       return product;
@@ -98,7 +104,7 @@ export class ProductService {
       `Updating product: ${JSON.stringify({ id, ...updateProductDto })}, user: ${user.username} (${user.id})`,
     );
     try {
-      const dbProduct = await this.findOne(id, user);
+      const dbProduct = await this.findOne({ id, user });
 
       const { newCode, name } = updateProductDto;
 
@@ -134,7 +140,7 @@ export class ProductService {
   async remove(id: string, user: CurrentUser) {
     this.logger.log(`Deleting product: ${id}, user: ${user.username} (${user.id})`);
     try {
-      await this.findOne(id, user);
+      await this.findOne({ id, user });
 
       const product = await this.prisma.product.update({
         where: { id },
@@ -162,7 +168,7 @@ export class ProductService {
   async restore(id: string, user: CurrentUser) {
     this.logger.log(`Restoring product: ${id}, user: ${user.username} (${user.id})`);
     try {
-      await this.findOne(id, user);
+      await this.findOne({ id, user });
 
       const product = await this.prisma.product.update({
         where: { id },

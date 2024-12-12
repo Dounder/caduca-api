@@ -34,7 +34,14 @@ export class ProductController {
 
   @Get(':id')
   findOne(@Param('id', ParseCuidPipe) id: string, @GetUser() user: CurrentUser) {
-    return this.getCachedResponse(`product:${id}`, () => this.productService.findOne(id, user));
+    return this.getCachedResponse(`product:${id}`, () => this.productService.findOne({ id, user }));
+  }
+
+  @Get('slug/:slug')
+  findOneBySlug(@Param('slug') slug: string, @GetUser() user: CurrentUser) {
+    return this.getCachedResponse(`product:slug:${slug}`, () =>
+      this.productService.findOne({ id: slug, user, slug: true }),
+    );
   }
 
   @Patch(':id')
