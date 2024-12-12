@@ -140,9 +140,15 @@ export class ProductService {
   async remove(id: string, user: CurrentUser) {
     this.logger.log(`Deleting product: ${id}, user: ${user.username} (${user.id})`);
     try {
-      await this.findOne({ id, user });
+      const product = await this.findOne({ id, user });
 
-      const product = await this.prisma.product.update({
+      if (product.deletedAt !== null)
+        throw new ConflictException({
+          status: HttpStatus.CONFLICT,
+          message: `[ERROR] Product with id ${id} is already deleted`,
+        });
+
+      const updatedProduct = await this.prisma.product.update({
         where: { id },
         data: {
           deletedAt: new Date(),
@@ -151,15 +157,9 @@ export class ProductService {
         select: PRODUCT_SELECT_SINGLE,
       });
 
-      if (product.deletedAt !== null)
-        throw new ConflictException({
-          status: HttpStatus.CONFLICT,
-          message: `[ERROR] Product with id ${id} is already deleted`,
-        });
-
       await this.clearCache();
 
-      return product;
+      return updatedProduct;
     } catch (error) {
       this.exHandler.process(error);
     }
@@ -168,9 +168,15 @@ export class ProductService {
   async restore(id: string, user: CurrentUser) {
     this.logger.log(`Restoring product: ${id}, user: ${user.username} (${user.id})`);
     try {
-      await this.findOne({ id, user });
+      const product = await this.findOne({ id, user });
 
-      const product = await this.prisma.product.update({
+      if (product.deletedAt === null)
+        throw new ConflictException({
+          status: HttpStatus.CONFLICT,
+          message: `[ERROR] Product with id ${id} is already restored`,
+        });
+
+      const updatedProduct = await this.prisma.product.update({
         where: { id },
         data: {
           deletedAt: null,
@@ -179,15 +185,9 @@ export class ProductService {
         select: PRODUCT_SELECT_SINGLE,
       });
 
-      if (product.deletedAt === null)
-        throw new ConflictException({
-          status: HttpStatus.CONFLICT,
-          message: `[ERROR] Product with id ${id} is already restored`,
-        });
-
       await this.clearCache();
 
-      return product;
+      return updatedProduct;
     } catch (error) {
       this.exHandler.process(error);
     }
