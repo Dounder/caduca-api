@@ -15,11 +15,11 @@ export const PRODUCT_SELECT_LIST = {
   updatedAt: true,
   deletedAt: true,
   createdBy: USER_AUDIT_SELECT,
+  codes: { select: { id: true, code: true } },
 };
 
 export const PRODUCT_SELECT_SINGLE = {
   ...PRODUCT_SELECT_LIST,
-  codes: { select: { id: true, code: true } },
   updatedBy: USER_AUDIT_SELECT,
   deletedBy: USER_AUDIT_SELECT,
 };

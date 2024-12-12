@@ -1,7 +1,6 @@
 import { Cache, CACHE_MANAGER } from '@nestjs/cache-manager';
 import { ConflictException, HttpStatus, Inject, Injectable, Logger, NotFoundException } from '@nestjs/common';
 import { Prisma, Product } from '@prisma/client';
-import { createId } from '@paralleldrive/cuid2';
 
 import { SummaryPaginationDto } from 'src/common';
 import { ExceptionHandler, hasRoles } from 'src/helpers';
