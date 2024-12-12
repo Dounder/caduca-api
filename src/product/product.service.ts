@@ -1,8 +1,9 @@
+import { Cache, CACHE_MANAGER } from '@nestjs/cache-manager';
 import { ConflictException, HttpStatus, Inject, Injectable, Logger, NotFoundException } from '@nestjs/common';
 import { Prisma, Product } from '@prisma/client';
+import { createId } from '@paralleldrive/cuid2';
 
-import { Cache, CACHE_MANAGER } from '@nestjs/cache-manager';
-import { FindAllParams, SummaryPaginationDto } from 'src/common';
+import { SummaryPaginationDto } from 'src/common';
 import { ExceptionHandler, hasRoles } from 'src/helpers';
 import { PrismaService } from 'src/prisma/prisma.service';
 import { CurrentUser, RoleId } from 'src/user';
@@ -26,7 +27,12 @@ export class ProductService {
 
       const product = await this.prisma.$transaction(async (tx) => {
         const product = await tx.product.create({
-          data: { ...productData, createdBy: { connect: { id: user.id } }, updatedBy: { connect: { id: user.id } } },
+          data: {
+            ...productData,
+            slug: await this.generateSlug(productData.name),
+            createdBy: { connect: { id: user.id } },
+            updatedBy: { connect: { id: user.id } },
+          },
           select: PRODUCT_SELECT_SINGLE,
         });
 
@@ -93,15 +99,29 @@ export class ProductService {
       `Updating product: ${JSON.stringify({ id, ...updateProductDto })}, user: ${user.username} (${user.id})`,
     );
     try {
-      await this.findOne(id, user);
+      const dbProduct = await this.findOne(id, user);
 
-      const product = await this.prisma.product.update({
-        where: { id },
-        data: {
-          ...updateProductDto,
-          updatedBy: { connect: { id: user.id } },
-        },
-        select: PRODUCT_SELECT_SINGLE,
+      const { newCode, name } = updateProductDto;
+
+      if (dbProduct.name === name) return dbProduct;
+
+      const product = await this.prisma.$transaction(async (tx) => {
+        const product = await this.prisma.product.update({
+          where: { id },
+          data: {
+            name,
+            slug: await this.generateSlug(updateProductDto.name, id),
+            updatedBy: { connect: { id: user.id } },
+          },
+          select: PRODUCT_SELECT_SINGLE,
+        });
+
+        if (newCode) {
+          await tx.productCode.create({
+            data: { product: { connect: { id: product.id } }, createdBy: { connect: { id: user.id } } },
+          });
+        }
+        return product;
       });
 
       await this.clearCache();
@@ -166,6 +186,23 @@ export class ProductService {
     } catch (error) {
       this.exHandler.process(error);
     }
+  }
+
+  private async generateSlug(text: string, id?: string) {
+    const slug = text
+      .normalize('NFD') // Normalize accented characters
+      .replace(/[\u0300-\u036f]/g, '') // Remove diacritics
+      .toLowerCase()
+      .trim()
+      .replace(/[^a-z0-9]+/g, '_') // Replace non-alphanumeric with '_'
+      .replace(/^_+|_+$/g, ''); // Trim starting and ending '_'
+
+    const existing = await this.prisma.product.findFirst({ where: { slug } });
+    if (!existing) return slug;
+
+    // If the base slug exists, append a short unique suffix
+    const uniqueSuffix = Math.random().toString(36).substring(2, 7);
+    return `${slug}_${uniqueSuffix}`;
   }
 
   async clearCache() {

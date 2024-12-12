@@ -6,10 +6,12 @@ model Product extends Base {
   @@map('product')
   name      String
   codes     ProductCode[]
+  slug      String
 
   createdBy User?         @relation("ProductCreator", fields: [createdById], references: [id], onDelete: SetNull)
   updatedBy User?         @relation("ProductUpdater", fields: [updatedById], references: [id], onDelete: SetNull)
   deletedBy User?         @relation("ProductDeleter", fields: [deletedById], references: [id], onDelete: SetNull)
+  @@index([slug], name: "product_slug_unique")
 }
 
 model ProductCode extends Base {

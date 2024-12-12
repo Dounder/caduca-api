@@ -10,6 +10,7 @@ export const PRODUCT_SELECT_SUMMARY = {
 export const PRODUCT_SELECT_LIST = {
   id: true,
   name: true,
+  slug: true,
   createdAt: true,
   updatedAt: true,
   deletedAt: true,
