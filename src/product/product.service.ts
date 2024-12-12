@@ -2,7 +2,7 @@ import { ConflictException, HttpStatus, Inject, Injectable, Logger, NotFoundExce
 import { Prisma, Product } from '@prisma/client';
 
 import { Cache, CACHE_MANAGER } from '@nestjs/cache-manager';
-import { FindAllParams, PaginationDto } from 'src/common';
+import { FindAllParams, SummaryPaginationDto } from 'src/common';
 import { ExceptionHandler, hasRoles } from 'src/helpers';
 import { PrismaService } from 'src/prisma/prisma.service';
 import { CurrentUser, RoleId } from 'src/user';
@@ -22,14 +22,20 @@ export class ProductService {
   async create(createProductDto: CreateProductDto, user: CurrentUser): Promise<Partial<Product>> {
     this.logger.log(`Creating product: ${JSON.stringify(createProductDto)}, user: ${user.username} (${user.id})`);
     try {
-      const product = await this.prisma.product.create({
-        data: {
-          ...createProductDto,
-          createdBy: { connect: { id: user.id } },
-          updatedBy: { connect: { id: user.id } },
-          codes: { create: { createdBy: { connect: { id: user.id } } } },
-        },
-        select: PRODUCT_SELECT_SINGLE,
+      const { newCode, ...productData } = createProductDto;
+
+      const product = await this.prisma.$transaction(async (tx) => {
+        const product = await tx.product.create({
+          data: { ...productData, createdBy: { connect: { id: user.id } }, updatedBy: { connect: { id: user.id } } },
+          select: PRODUCT_SELECT_SINGLE,
+        });
+
+        if (newCode) {
+          await tx.productCode.create({
+            data: { product: { connect: { id: product.id } }, createdBy: { connect: { id: user.id } } },
+          });
+        }
+        return product;
       });
 
       await this.clearCache();
@@ -40,9 +46,9 @@ export class ProductService {
     }
   }
 
-  async findAll({ pagination, user, summary = false }: FindAllParams) {
-    this.logger.log(`Fetching products: ${JSON.stringify(pagination)}, user: ${user.username} (${user.id})`);
-    const { page, limit } = pagination;
+  async findAll(user: CurrentUser, params: SummaryPaginationDto) {
+    this.logger.log(`Fetching products: ${JSON.stringify(params)}, user: ${user.username} (${user.id})`);
+    const { page, limit, summary } = params;
     const isAdmin = hasRoles(user.roles, [RoleId.Admin]);
     const where = isAdmin ? {} : { deletedAt: null };
 

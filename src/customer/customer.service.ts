@@ -2,7 +2,7 @@ import { Cache, CACHE_MANAGER } from '@nestjs/cache-manager';
 import { ConflictException, HttpStatus, Inject, Injectable, Logger, NotFoundException } from '@nestjs/common';
 import { Customer } from '@prisma/client';
 
-import { FindAllParams, ListResponse, PaginationDto } from 'src/common';
+import { FindAllParams, ListResponse, PaginationDto, SummaryPaginationDto } from 'src/common';
 import { ExceptionHandler, hasRoles } from 'src/helpers';
 import { PrismaService } from 'src/prisma/prisma.service';
 import { CurrentUser, RoleId } from 'src/user';
@@ -40,9 +40,9 @@ export class CustomerService {
     }
   }
 
-  async findAll({ pagination, user, summary = false }: FindAllParams): Promise<ListResponse<Customer>> {
-    this.logger.log(`Fetching customers: ${JSON.stringify(pagination)}, user: ${user.username} (${user.id})`);
-    const { page, limit } = pagination;
+  async findAll(user: CurrentUser, params: SummaryPaginationDto): Promise<ListResponse<Customer>> {
+    this.logger.log(`Fetching customers: ${JSON.stringify(params)}, user: ${user.username} (${user.id})`);
+    const { page, limit, summary } = params;
     const isAdmin = hasRoles(user.roles, [RoleId.Admin]);
     const where = isAdmin ? {} : { deletedAt: null };
 

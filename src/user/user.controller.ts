@@ -3,7 +3,7 @@ import { Body, Controller, Delete, Get, Inject, Param, Patch, Post, Query } from
 import { User } from '@prisma/client';
 
 import { Auth, GetUser } from 'src/auth';
-import { ListResponse, PaginationDto, ParseCuidPipe } from 'src/common';
+import { ListResponse, PaginationDto, ParseCuidPipe, SummaryPaginationDto } from 'src/common';
 import { CreateUserDto, UpdateUserDto } from './dto';
 import { CurrentUser, RoleId, UserResponse, UserSummary } from './interfaces';
 import { UserService } from './user.service';
@@ -27,16 +27,9 @@ export class UserController {
   }
 
   @Get()
-  findAll(@Query() pagination: PaginationDto, @GetUser() user: CurrentUser): Promise<ListResponse<User>> {
-    return this.usersService.findAll({ pagination, user });
-    // const cacheKey = `user:page:${pagination.page}:limit:${pagination.limit}`;
-    // return this.getCachedResponse(cacheKey, () => this.usersService.findAll({ pagination, user }));
-  }
-
-  @Get('all/summary')
-  findAllSummary(@Query() pagination: PaginationDto, @GetUser() user: CurrentUser): Promise<ListResponse<UserSummary>> {
-    const cacheKey = `user:summary:page:${pagination.page}:limit:${pagination.limit}`;
-    return this.getCachedResponse(cacheKey, () => this.usersService.findAll({ pagination, user, summary: true }));
+  findAll(@GetUser() user: CurrentUser, @Query() params: SummaryPaginationDto): Promise<ListResponse<User>> {
+    const cacheKey = `user:page:${params.page}:limit:${params.limit}:summary:${params.summary}`;
+    return this.getCachedResponse(cacheKey, () => this.usersService.findAll(user, params));
   }
 
   @Get(':id')
