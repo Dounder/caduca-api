@@ -156,7 +156,11 @@ export class ProductCodeService {
 
   async clearCache() {
     this.logger.log('Clearing customer cache');
-    const keys = await this.cacheManager.store.keys('product_code:*');
-    if (keys.length > 0) await this.cacheManager.store.mdel(...keys);
+    const codeKeys = await this.cacheManager.store.keys('product_code:*');
+    if (codeKeys.length > 0) await this.cacheManager.store.mdel(...codeKeys);
+
+    const productKeys = await this.cacheManager.store.keys('product:*');
+    console.log('🚀 ~ ProductCodeService ~ clearCache ~ productKeys:', productKeys);
+    if (productKeys.length > 0) await this.cacheManager.store.mdel(...productKeys);
   }
 }
