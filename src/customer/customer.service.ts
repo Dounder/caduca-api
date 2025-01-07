@@ -2,7 +2,7 @@ import { Cache, CACHE_MANAGER } from '@nestjs/cache-manager';
 import { ConflictException, HttpStatus, Inject, Injectable, Logger, NotFoundException } from '@nestjs/common';
 import { Customer } from '@prisma/client';
 
-import { FindAllParams, ListResponse, PaginationDto, SummaryPaginationDto } from 'src/common';
+import { ListResponse, PaginationDto } from 'src/common';
 import { ExceptionHandler, hasRoles } from 'src/helpers';
 import { PrismaService } from 'src/prisma/prisma.service';
 import { CurrentUser, RoleId } from 'src/user';
@@ -40,25 +40,40 @@ export class CustomerService {
     }
   }
 
-  async findAll(user: CurrentUser, params: SummaryPaginationDto): Promise<ListResponse<Customer>> {
+  async findAll(user: CurrentUser, params: PaginationDto): Promise<ListResponse<Customer>> {
     this.logger.log(`Fetching customers: ${JSON.stringify(params)}, user: ${user.username} (${user.id})`);
-    const { page, limit, summary } = params;
-    const isAdmin = hasRoles(user.roles, [RoleId.Admin]);
-    const where = isAdmin ? {} : { deletedAt: null };
+    try {
+      const { page, limit, summary, search } = params;
+      const isAdmin = hasRoles(user.roles, [RoleId.Admin]);
+      const where = {
+        AND: [
+          isAdmin ? {} : { deletedAt: null },
+          search
+            ? {
+                OR: [
+                  { name: { contains: search, mode: 'insensitive' as const } },
+                  { code: { equals: parseInt(search) || undefined } },
+                ],
+              }
+            : {},
+        ],
+      };
 
-    const [data, total] = await this.prisma.$transaction([
-      this.prisma.customer.findMany({
-        take: limit,
-        skip: (page - 1) * limit,
-        where,
-        select: summary ? CUSTOMER_SELECT_LIST_SUMMARY : CUSTOMER_SELECT_LIST,
-      }),
-      this.prisma.customer.count({ where }),
-    ]);
+      const [data, total] = await this.prisma.$transaction([
+        this.prisma.customer.findMany({
+          take: limit,
+          skip: (page - 1) * limit,
+          where,
+          select: summary ? CUSTOMER_SELECT_LIST_SUMMARY : CUSTOMER_SELECT_LIST,
+          orderBy: { createdAt: 'desc' },
+        }),
+        this.prisma.customer.count({ where }),
+      ]);
 
-    const lastPage = Math.ceil(total / limit);
-
-    return { meta: { total, page, lastPage }, data };
+      return { meta: { total, page, lastPage: Math.ceil(total / limit) }, data };
+    } catch (error) {
+      this.exHandler.process(error);
+    }
   }
 
   async findOne(id: string, user: CurrentUser): Promise<Partial<Customer>> {

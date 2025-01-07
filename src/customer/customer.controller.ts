@@ -2,7 +2,7 @@ import { Cache, CACHE_MANAGER } from '@nestjs/cache-manager';
 import { Body, Controller, Delete, Get, Inject, Param, ParseIntPipe, Patch, Post, Query } from '@nestjs/common';
 
 import { Auth, GetUser } from 'src/auth';
-import { ParseCuidPipe, SummaryPaginationDto } from 'src/common';
+import { PaginationDto, ParseCuidPipe } from 'src/common';
 import { CurrentUser } from 'src/user';
 import { CustomerService } from './customer.service';
 import { CreateCustomerDto, UpdateCustomerDto } from './dto';
@@ -21,8 +21,9 @@ export class CustomerController {
   }
 
   @Get()
-  findAll(@GetUser() user: CurrentUser, @Query() params: SummaryPaginationDto) {
-    const cacheKey = `customer:page:${params.page}:limit:${params.limit}:summary:${params.summary}`;
+  findAll(@GetUser() user: CurrentUser, @Query() params: PaginationDto) {
+    const { page, limit, summary, search } = params;
+    const cacheKey = `customer:all:${page}:${limit}:${summary}:${search}`;
 
     return this.getCachedResponse(cacheKey, () => this.customerService.findAll(user, params));
   }
