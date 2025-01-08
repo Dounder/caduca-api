@@ -28,3 +28,8 @@ export interface FindAllParams {
   user: CurrentUser;
   summary?: boolean;
 }
+
+export interface CatalogResponse {
+  id: number;
+  name: string;
+}
