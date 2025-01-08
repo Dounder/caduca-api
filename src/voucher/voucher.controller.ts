@@ -1,4 +1,4 @@
-import { Body, Controller, Delete, Get, Param, Patch, Post, Query } from '@nestjs/common';
+import { Body, Controller, Delete, Get, Param, ParseIntPipe, Patch, Post, Query } from '@nestjs/common';
 
 import { Auth, GetUser } from 'src/auth';
 import { PaginationDto, ParseCuidPipe } from 'src/common';
@@ -24,6 +24,11 @@ export class VoucherController {
   @Get(':id')
   findOne(@Param('id', ParseCuidPipe) id: string, @GetUser() user: CurrentUser) {
     return this.voucherService.findOne(id, user);
+  }
+
+  @Get('number/:number')
+  findOneByNumber(@Param('number', ParseIntPipe) number: number, @GetUser() user: CurrentUser) {
+    return this.voucherService.findOneByNumber(number, user);
   }
 
   @Patch(':id/status')

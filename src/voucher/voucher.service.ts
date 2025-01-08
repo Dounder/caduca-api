@@ -77,6 +77,29 @@ export class VoucherService {
     }
   }
 
+  async findOneByNumber(number: number, user: CurrentUser) {
+    this.logger.log(`Fetching voucher: #${number}, user: ${user.username} (${user.id})`);
+    try {
+      const isAdmin = hasRoles(user.roles, [RoleId.Admin]);
+      const where = isAdmin ? { number } : { number, deletedAt: null };
+
+      const voucher = await this.prisma.voucher.findFirst({
+        where,
+        select: VOUCHER_SELECT_SINGLE,
+      });
+
+      if (!voucher)
+        throw new NotFoundException({
+          status: HttpStatus.NOT_FOUND,
+          message: `[ERROR] Voucher with number #${number} not found`,
+        });
+
+      return voucher;
+    } catch (error) {
+      this.exHandler.process(error);
+    }
+  }
+
   async updateStatus(id: string, status: VoucherStatus, user: CurrentUser) {
     this.logger.log(`Updating voucher status: ${id}, status: ${status}`);
     try {
