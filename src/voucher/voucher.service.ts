@@ -16,14 +16,16 @@ export class VoucherService {
   constructor(private readonly prisma: PrismaService) {}
 
   async create(createVoucherDto: CreateVoucherDto, user: CurrentUser) {
-    const message = `Creating voucher: ${JSON.stringify(createVoucherDto)}, user: ${user.username} (${user.id})`;
+    const { items, ...data } = createVoucherDto;
+    const message = `Creating voucher: ${JSON.stringify(data)} with: ${items.length} items, user: ${user.username} (${user.id})`;
     this.logger.log(message);
     try {
       const voucher = await this.prisma.voucher.create({
         data: {
-          ...createVoucherDto,
+          ...data,
           createdById: user.id,
           logs: { create: { message, createdBy: { connect: { id: user.id } } } },
+          items: { createMany: { data: items } },
         },
         select: VOUCHER_SELECT_SINGLE,
       });

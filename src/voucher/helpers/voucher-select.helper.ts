@@ -20,4 +20,20 @@ export const VOUCHER_SELECT_SINGLE = {
   ...VOUCHER_SELECT_LIST,
   updatedBy: USER_AUDIT_SELECT,
   deletedBy: USER_AUDIT_SELECT,
+  items: {
+    select: {
+      id: true,
+      expirationDate: true,
+      observation: true,
+      received: true,
+      quantity: true,
+      productCode: {
+        select: {
+          id: true,
+          code: true,
+          product: { select: { id: true, name: true, slug: true } },
+        },
+      },
+    },
+  },
 };
