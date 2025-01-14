@@ -141,6 +141,8 @@ export class VoucherService {
         return prisma.voucher.update({
           where: { id },
           data: {
+            approvedDate: status === VoucherStatus.Approved ? new Date() : null,
+            rejectedDate: status === VoucherStatus.Rejected ? new Date() : null,
             status: { connect: { id: status } },
             logs: { create: { message, createdBy: { connect: { id: user.id } } } },
           },
