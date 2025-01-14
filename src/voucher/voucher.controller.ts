@@ -3,7 +3,7 @@ import { Body, Controller, Delete, Get, Param, ParseIntPipe, Patch, Post, Query 
 import { Auth, GetUser } from 'src/auth';
 import { PaginationDto, ParseCuidPipe } from 'src/common';
 import { CurrentUser, RoleId } from 'src/user';
-import { CreateVoucherDto, UpdateVoucherStatusDto } from './dto';
+import { CreateVoucherDto, UpdateVoucherDto } from './dto';
 import { VoucherService } from './voucher.service';
 
 @Controller('voucher')
@@ -31,14 +31,14 @@ export class VoucherController {
     return this.voucherService.findOneByNumber(number, user);
   }
 
-  @Patch(':id/status')
+  @Patch(':id')
   updateStatus(
     @Param('id', ParseCuidPipe) id: string,
-    @Body() updateStatusDto: UpdateVoucherStatusDto,
+    @Body() updateDto: UpdateVoucherDto,
     @GetUser() user: CurrentUser,
   ) {
-    const { status } = updateStatusDto;
-    return this.voucherService.updateStatus(id, status, user);
+    console.log({ id, updateDto, user });
+    return this.voucherService.update(id, updateDto, user);
   }
 
   @Delete(':id')

@@ -13,4 +13,5 @@ export interface ProductCodeResponse extends BaseResponse {
 export interface ProductSummary {
   id: string;
   name: string;
+  slug: string;
 }

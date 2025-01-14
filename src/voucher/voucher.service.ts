@@ -1,12 +1,21 @@
-import { ConflictException, HttpStatus, Injectable, Logger, NotFoundException } from '@nestjs/common';
+import {
+  BadRequestException,
+  ConflictException,
+  HttpStatus,
+  Injectable,
+  Logger,
+  NotFoundException,
+} from '@nestjs/common';
 
 import { PaginationDto } from 'src/common';
 import { ExceptionHandler, hasRoles } from 'src/helpers';
 import { PrismaService } from 'src/prisma/prisma.service';
 import { CurrentUser, RoleId } from 'src/user';
-import { CreateVoucherDto } from './dto';
+import { CreateVoucherDto, UpdateVoucherDto, UpdateVoucherItemDto } from './dto';
 import { validateVoucherStatusChange, VOUCHER_SELECT_LIST, VOUCHER_SELECT_SINGLE } from './helpers';
-import { VoucherStatus } from './interfaces';
+import { VoucherResponse, VoucherStatus } from './interfaces';
+import { VOUCHER_ITEM_SINGLE } from './voucher-item';
+import { VoucherItemService } from './voucher-item/voucher-item.service';
 
 @Injectable()
 export class VoucherService {
@@ -56,7 +65,7 @@ export class VoucherService {
     return { meta: { total, page, lastPage }, data };
   }
 
-  async findOne(id: string, user: CurrentUser) {
+  async findOne(id: string, user: CurrentUser): Promise<VoucherResponse> {
     this.logger.log(`Fetching voucher: ${id}, user: ${user.username} (${user.id})`);
     try {
       const isAdmin = hasRoles(user.roles, [RoleId.Admin]);
@@ -102,13 +111,17 @@ export class VoucherService {
     }
   }
 
-  async updateStatus(id: string, status: VoucherStatus, user: CurrentUser) {
-    this.logger.log(`Updating voucher status: ${id}, status: ${status}`);
+  async update(id: string, updateDto: UpdateVoucherDto, user: CurrentUser): Promise<VoucherResponse> {
+    const { status, items } = updateDto;
+    this.logger.log(`Updating voucher: ${id}, user: ${user.username} (${user.id})`);
+
     try {
+      // Retrieve the current voucher
       const voucher = await this.findOne(id, user);
       const oldStatus = voucher.status.id as VoucherStatus;
-      const isValidChange = validateVoucherStatusChange(oldStatus, status);
 
+      // Validate new status
+      const isValidChange = validateVoucherStatusChange(oldStatus, status);
       if (!isValidChange) {
         throw new ConflictException({
           status: HttpStatus.CONFLICT,
@@ -116,15 +129,26 @@ export class VoucherService {
         });
       }
 
+      // Build log message
       const message = `Change status from ${VoucherStatus[oldStatus]} (${oldStatus}) to ${VoucherStatus[status]} (${status}), user: ${user.username} (${user.id})`;
-      return await this.prisma.voucher.update({
-        where: { id },
-        data: {
-          status: { connect: { id: status } },
-          logs: { create: { message, createdBy: { connect: { id: user.id } } } },
-        },
-        select: VOUCHER_SELECT_SINGLE,
+
+      // Perform updates in a transaction
+      const updatedVoucher = await this.prisma.$transaction(async (prisma) => {
+        // Update items if they exist
+        if (items && items.length > 0) await this.updateItems(voucher.id, items, user);
+
+        // Update the voucher status and add a log entry
+        return prisma.voucher.update({
+          where: { id },
+          data: {
+            status: { connect: { id: status } },
+            logs: { create: { message, createdBy: { connect: { id: user.id } } } },
+          },
+          select: VOUCHER_SELECT_SINGLE,
+        });
       });
+
+      return updatedVoucher;
     } catch (error) {
       this.exHandler.process(error);
     }
@@ -179,6 +203,34 @@ export class VoucherService {
         },
         select: VOUCHER_SELECT_SINGLE,
       });
+    } catch (error) {
+      this.exHandler.process(error);
+    }
+  }
+
+  async updateItems(voucherId: string, items: UpdateVoucherItemDto[], user: CurrentUser) {
+    if (!items || items.length === 0)
+      throw new BadRequestException({ status: HttpStatus.BAD_REQUEST, message: 'Items are required' });
+
+    const message = `Updating ${items.length} voucher items for voucher ${voucherId}, user: ${user.username} (${user.id})`;
+    this.logger.log(message, { details: items });
+
+    const itemUpdates = items.map((item) => ({
+      where: { id: item.id },
+      data: { ...item, updatedById: user.id, deletedById: item.deletedAt ? user.id : null },
+      select: VOUCHER_ITEM_SINGLE,
+    }));
+
+    try {
+      const updatedItems = await this.prisma.$transaction(async (prisma) => {
+        const updated = await Promise.all(itemUpdates.map(prisma.voucherItem.update));
+
+        await prisma.voucherLog.create({ data: { voucherId, message, createdById: user.id } });
+
+        return updated;
+      });
+
+      return updatedItems;
     } catch (error) {
       this.exHandler.process(error);
     }
