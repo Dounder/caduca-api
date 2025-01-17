@@ -3,7 +3,7 @@ import { Body, Controller, Delete, Get, Inject, Param, Patch, Post, Query } from
 import { User } from '@prisma/client';
 
 import { Auth, GetUser } from 'src/auth';
-import { ListResponse, PaginationDto, ParseCuidPipe, SummaryPaginationDto } from 'src/common';
+import { ListResponse, PaginationDto, ParseCuidPipe } from 'src/common';
 import { CreateUserDto, UpdateUserDto } from './dto';
 import { CurrentUser, RoleId, UserResponse, UserSummary } from './interfaces';
 import { UserService } from './user.service';
@@ -27,7 +27,7 @@ export class UserController {
   }
 
   @Get()
-  findAll(@GetUser() user: CurrentUser, @Query() params: SummaryPaginationDto): Promise<ListResponse<User>> {
+  findAll(@GetUser() user: CurrentUser, @Query() params: PaginationDto): Promise<ListResponse<User>> {
     const cacheKey = `user:page:${params.page}:limit:${params.limit}:summary:${params.summary}`;
     return this.getCachedResponse(cacheKey, () => this.usersService.findAll(user, params));
   }

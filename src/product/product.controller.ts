@@ -1,10 +1,10 @@
-import { Controller, Get, Post, Body, Patch, Param, Delete, ParseIntPipe, Query, Inject } from '@nestjs/common';
-import { ProductService } from './product.service';
-import { CreateProductDto, UpdateProductDto } from './dto';
-import { Auth, GetUser } from 'src/auth';
-import { CurrentUser, RoleId } from 'src/user';
-import { SummaryPaginationDto, PaginationDto, ParseCuidPipe } from 'src/common';
 import { Cache, CACHE_MANAGER } from '@nestjs/cache-manager';
+import { Body, Controller, Delete, Get, Inject, Param, Patch, Post, Query } from '@nestjs/common';
+import { Auth, GetUser } from 'src/auth';
+import { PaginationDto, ParseCuidPipe } from 'src/common';
+import { CurrentUser, RoleId } from 'src/user';
+import { CreateProductDto, UpdateProductDto } from './dto';
+import { ProductService } from './product.service';
 
 @Controller('product')
 @Auth()
@@ -21,7 +21,7 @@ export class ProductController {
   }
 
   @Get()
-  findAll(@GetUser() user: CurrentUser, @Query() params: SummaryPaginationDto) {
+  findAll(@GetUser() user: CurrentUser, @Query() params: PaginationDto) {
     const cacheKey = `product:page:${params.page}:limit:${params.limit}:summary:${params.summary}`;
     return this.getCachedResponse(cacheKey, () => this.productService.findAll(user, params));
   }

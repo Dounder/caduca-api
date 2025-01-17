@@ -2,7 +2,7 @@ import { Cache, CACHE_MANAGER } from '@nestjs/cache-manager';
 import { ConflictException, HttpStatus, Inject, Injectable, Logger, NotFoundException } from '@nestjs/common';
 import { Prisma, Product } from '@prisma/client';
 
-import { SummaryPaginationDto } from 'src/common';
+import { PaginationDto } from 'src/common';
 import { ExceptionHandler, hasRoles } from 'src/helpers';
 import { PrismaService } from 'src/prisma/prisma.service';
 import { CurrentUser, RoleId } from 'src/user';
@@ -57,7 +57,7 @@ export class ProductService {
     }
   }
 
-  async findAll(user: CurrentUser, params: SummaryPaginationDto) {
+  async findAll(user: CurrentUser, params: PaginationDto) {
     this.logger.log(`Fetching products: ${JSON.stringify(params)}, user: ${user.username} (${user.id})`);
     const { page, limit, summary } = params;
     const isAdmin = hasRoles(user.roles, [RoleId.Admin]);

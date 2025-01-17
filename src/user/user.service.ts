@@ -11,7 +11,7 @@ import { User } from '@prisma/client';
 import * as bcrypt from 'bcrypt';
 
 import { Cache, CACHE_MANAGER } from '@nestjs/cache-manager';
-import { FindAllParams, ListResponse, PaginationDto, SummaryPaginationDto } from 'src/common';
+import { ListResponse, PaginationDto } from 'src/common';
 import { ExceptionHandler, hasRoles } from 'src/helpers';
 import { PrismaService } from 'src/prisma/prisma.service';
 import { CreateUserDto, UpdateUserDto } from './dto';
@@ -65,7 +65,7 @@ export class UserService {
     }
   }
 
-  async findAll(user: CurrentUser, params: SummaryPaginationDto): Promise<ListResponse<User>> {
+  async findAll(user: CurrentUser, params: PaginationDto): Promise<ListResponse<User>> {
     this.logger.log(`Fetching users: ${JSON.stringify(params)}, user: ${user.id} - ${user.username}`);
     const { page, limit, summary } = params;
     const isAdmin = hasRoles(user.roles, [RoleId.Admin]);
