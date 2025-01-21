@@ -21,7 +21,7 @@ export class SalespersonController {
 
   @Get()
   findAll(@GetUser() user: CurrentUser, @Query() params: PaginationDto) {
-    const key = `salesperson:page:${params.page}:limit:${params.limit}:summary:${params.summary}`;
+    const key = `salesperson:page:${params.page}:limit:${params.limit}:summary:${params.summary}:search:${params.search}`;
 
     return this.getCachedResponse(key, () => this.salespersonService.findAll(user, params));
   }

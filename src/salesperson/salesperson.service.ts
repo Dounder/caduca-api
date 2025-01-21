@@ -42,9 +42,21 @@ export class SalespersonService {
 
   async findAll(user: CurrentUser, params: PaginationDto): Promise<ListResponse<SalespersonResponse>> {
     this.logger.log(`Fetching salesperson: ${JSON.stringify(params)}, user: ${user.username} (${user.id})`);
-    const { page, limit, summary } = params;
+    const { page, limit, summary, search } = params;
     const isAdmin = hasRoles(user.roles, [RoleId.Admin]);
-    const where = isAdmin ? {} : { deletedAt: null };
+    const where = {
+      AND: [
+        isAdmin ? {} : { deletedAt: null },
+        search
+          ? {
+              OR: [
+                { name: { contains: search, mode: 'insensitive' as const } },
+                { code: { equals: parseInt(search) || undefined } },
+              ],
+            }
+          : {},
+      ],
+    };
 
     const [data, total] = await this.prisma.$transaction([
       this.prisma.salesperson.findMany({
