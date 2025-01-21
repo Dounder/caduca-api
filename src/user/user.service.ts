@@ -67,10 +67,21 @@ export class UserService {
 
   async findAll(user: CurrentUser, params: PaginationDto): Promise<ListResponse<User>> {
     this.logger.log(`Fetching users: ${JSON.stringify(params)}, user: ${user.id} - ${user.username}`);
-    const { page, limit, summary } = params;
+    const { page, limit, summary, search } = params;
     const isAdmin = hasRoles(user.roles, [RoleId.Admin]);
-
-    const where = isAdmin ? {} : { deletedAt: null };
+    const where = {
+      AND: [
+        isAdmin ? {} : { deletedAt: null },
+        search
+          ? {
+              OR: [
+                { username: { contains: search, mode: 'insensitive' as const } },
+                { email: { contains: search, mode: 'insensitive' as const } },
+              ],
+            }
+          : {},
+      ],
+    };
 
     const [data, total] = await this.prisma.$transaction([
       this.prisma.user.findMany({

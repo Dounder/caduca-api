@@ -28,7 +28,7 @@ export class UserController {
 
   @Get()
   findAll(@GetUser() user: CurrentUser, @Query() params: PaginationDto): Promise<ListResponse<User>> {
-    const cacheKey = `user:page:${params.page}:limit:${params.limit}:summary:${params.summary}`;
+    const cacheKey = `user:page:${params.page}:limit:${params.limit}:summary:${params.summary}:search:${params.search}`;
     return this.getCachedResponse(cacheKey, () => this.usersService.findAll(user, params));
   }
 
