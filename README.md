@@ -4,7 +4,7 @@
 
 # Aplicación Backend - Sistema de Tickets
 
-Esta es la aplicación backend para el sistema de tickets de la empresa, construida con NestJS. Proporciona una API RESTful para la aplicación frontend y maneja toda la lógica de negocio, gestión de datos y características de seguridad.
+Esta es la aplicación backend para el sistema de vales de producto vencido, construida con NestJS. Proporciona una API RESTful para la aplicación frontend y maneja toda la lógica de negocio, gestión de datos y características de seguridad.
 
 ## Instalación
 
