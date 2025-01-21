@@ -15,7 +15,6 @@ import { CreateVoucherDto, UpdateVoucherDto, UpdateVoucherItemDto } from './dto'
 import { validateVoucherStatusChange, VOUCHER_SELECT_LIST, VOUCHER_SELECT_SINGLE } from './helpers';
 import { VoucherResponse, VoucherStatus } from './interfaces';
 import { VOUCHER_ITEM_SINGLE } from './voucher-item';
-import { VoucherItemService } from './voucher-item/voucher-item.service';
 
 @Injectable()
 export class VoucherService {
@@ -46,9 +45,21 @@ export class VoucherService {
   }
 
   async findAll(pagination: PaginationDto, user: CurrentUser) {
-    const { page, limit } = pagination;
+    const { page, limit, search } = pagination;
     const isAdmin = hasRoles(user.roles, [RoleId.Admin]);
-    const where = isAdmin ? {} : { deletedAt: null };
+    const where = {
+      AND: [
+        isAdmin ? {} : { deletedAt: null },
+        search
+          ? {
+              OR: [
+                { number: { equals: parseInt(search) || undefined } },
+                { customer: { name: { contains: search, mode: 'insensitive' as const } } },
+              ],
+            }
+          : {},
+      ],
+    };
 
     const [data, total] = await this.prisma.$transaction([
       this.prisma.voucher.findMany({
