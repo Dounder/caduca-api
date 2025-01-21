@@ -12,31 +12,31 @@ export class VoucherController {
   constructor(private readonly voucherService: VoucherService) {}
 
   @Post()
-  @Auth(RoleId.Admin, RoleId.Manager, RoleId.Developer)
+  @Auth(RoleId.Admin, RoleId.Manager, RoleId.Developer, RoleId.Salesperson)
   create(@Body() createVoucherDto: CreateVoucherDto, @GetUser() user: CurrentUser) {
     return this.voucherService.create(createVoucherDto, user);
   }
 
   @Get()
-  @Auth(RoleId.Admin, RoleId.Manager, RoleId.Developer, RoleId.Warehouse)
+  @Auth(RoleId.Admin, RoleId.Manager, RoleId.Developer, RoleId.Warehouse, RoleId.Salesperson)
   findAll(@Query() pagination: PaginationDto, @GetUser() user: CurrentUser) {
     return this.voucherService.findAll(pagination, user);
   }
 
   @Get(':id')
-  @Auth(RoleId.Admin, RoleId.Manager, RoleId.Developer, RoleId.Warehouse)
+  @Auth(RoleId.Admin, RoleId.Manager, RoleId.Developer, RoleId.Warehouse, RoleId.Salesperson)
   findOne(@Param('id', ParseCuidPipe) id: string, @GetUser() user: CurrentUser) {
     return this.voucherService.findOne(id, user);
   }
 
   @Get('number/:number')
-  @Auth(RoleId.Admin, RoleId.Manager, RoleId.Developer, RoleId.Warehouse)
+  @Auth(RoleId.Admin, RoleId.Manager, RoleId.Developer, RoleId.Warehouse, RoleId.Salesperson)
   findOneByNumber(@Param('number', ParseIntPipe) number: number, @GetUser() user: CurrentUser) {
     return this.voucherService.findOneByNumber(number, user);
   }
 
   @Patch(':id')
-  @Auth(RoleId.Admin, RoleId.Manager, RoleId.Developer, RoleId.Warehouse)
+  @Auth(RoleId.Admin, RoleId.Manager, RoleId.Developer, RoleId.Warehouse, RoleId.Salesperson)
   updateStatus(
     @Param('id', ParseCuidPipe) id: string,
     @Body() updateDto: UpdateVoucherDto,
