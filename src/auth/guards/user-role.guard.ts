@@ -13,6 +13,28 @@ import { META_ROLES_KEY } from '../decorators';
 import { CurrentUser, RoleId } from 'src/user';
 import { hasRoles } from 'src/helpers';
 
+/**
+ * Guard that checks if a user has the required roles to access a route.
+ * This guard should be used in conjunction with the AuthGuard to ensure proper authentication.
+ *
+ * @implements {CanActivate}
+ *
+ * @remarks
+ * The guard checks roles defined through the META_ROLES_KEY metadata.
+ * If no roles are defined, access is granted to everyone.
+ * If roles are defined, the user must have at least one of the required roles.
+ *
+ * @throws {InternalServerErrorException} When no user is found in the request (AuthGuard not used)
+ * @throws {ForbiddenException} When the user doesn't have the required roles
+ *
+ * @example
+ * @UseGuards(AuthGuard(), UserRoleGuard)
+ * @SetMetadata(META_ROLES_KEY, [RoleId.ADMIN])
+ * @Get('admin-only')
+ * adminEndpoint() {
+ *   return 'This is only accessible by admins';
+ * }
+ */
 @Injectable()
 export class UserRoleGuard implements CanActivate {
   private readonly logger = new Logger(UserRoleGuard.name);
