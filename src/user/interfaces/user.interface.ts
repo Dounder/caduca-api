@@ -8,6 +8,16 @@ export enum RoleId {
   Warehouse = 'cm3rmdiwm00070clf3w8288g4',
 }
 
+export enum RoleNameEs {
+  Admin = 'Administrador',
+  Manager = 'Gerente',
+  Staff = 'Personal',
+  Developer = 'Desarrollador',
+  Salesperson = 'Vendedor',
+  Customer = 'Cliente',
+  Warehouse = 'Almacén',
+}
+
 export interface RoleItem {
   id: string;
   name: string;

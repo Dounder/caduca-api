@@ -6,9 +6,10 @@ import { ProductModule } from './product/product.module';
 import { SalespersonModule } from './salesperson/salesperson.module';
 import { UserModule } from './user/user.module';
 import { VoucherModule } from './voucher/voucher.module';
+import { ReportModule } from './report/report.module';
 
 @Module({
-  imports: [AuthModule, UserModule, ProductModule, ProductCodeModule, CustomerModule, SalespersonModule, VoucherModule],
+  imports: [AuthModule, UserModule, ProductModule, ProductCodeModule, CustomerModule, SalespersonModule, VoucherModule, ReportModule],
   providers: [],
 })
 export class AppModule {}
