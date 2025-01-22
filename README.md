@@ -2,7 +2,7 @@
   <a href="http://nestjs.com/" target="blank"><img src="https://nestjs.com/img/logo-small.svg" width="200" alt="Nest Logo" /></a>
 </p>
 
-# Aplicación Backend - Sistema de Tickets
+# Caduca
 
 Esta es la aplicación backend para el sistema de vales de producto vencido, construida con NestJS. Proporciona una API RESTful para la aplicación frontend y maneja toda la lógica de negocio, gestión de datos y características de seguridad.
 
