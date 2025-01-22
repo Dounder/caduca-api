@@ -48,9 +48,10 @@ export class GenerateReportUtils {
   }: ReportOptions): Promise<void> {
     // Set response headers for file download
     res.setHeader('Content-Type', 'application/vnd.openxmlformats-officedocument.spreadsheetml.sheet');
+    res.setHeader('Access-Control-Expose-Headers', 'Content-Disposition');
     res.setHeader(
       'Content-Disposition',
-      `attachment; filename=${filename}_${DateUtils.getFormattedDate('yyyy_MM_dd')}.xlsx`,
+      `attachment; filename="usuarios_${DateUtils.getFormattedDate('yyyy_MM_dd')}.xlsx"`,
     );
 
     // Create a new workbook and worksheet
