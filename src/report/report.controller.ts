@@ -1,8 +1,11 @@
-import { Controller, Get, Res } from '@nestjs/common';
-import { ReportService } from './report.service';
 import { Response } from 'express';
 
+import { Controller, Get, Res } from '@nestjs/common';
+import { Auth } from 'src/auth';
+import { ReportService } from './report.service';
+
 @Controller('report')
+@Auth()
 export class ReportController {
   constructor(private readonly reportService: ReportService) {}
 
