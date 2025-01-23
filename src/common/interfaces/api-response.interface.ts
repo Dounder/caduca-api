@@ -38,7 +38,7 @@ export interface FindAllParams {
   summary?: boolean;
 }
 
-export interface CatalogResponse {
+export interface Catalog {
   id: number;
   name: string;
 }

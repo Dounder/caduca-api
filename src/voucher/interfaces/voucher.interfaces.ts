@@ -1,7 +1,28 @@
-import { CatalogResponse } from 'src/common';
+import { BaseResponse, Catalog } from 'src/common';
 import { CustomerSummary } from 'src/customer';
-import { CodeSummary } from 'src/product';
-import { UserSummary } from 'src/user';
+import { ProductCodeVoucher } from 'src/product';
+
+export interface VoucherList extends BaseResponse {
+  number: number;
+  approvedDate: null | Date;
+  rejectedDate: null | Date;
+  customer: CustomerSummary;
+  status: Catalog;
+  returnType: Catalog;
+}
+
+export interface Voucher extends VoucherList {
+  items: VoucherItem[];
+}
+
+export interface VoucherItem {
+  id: string;
+  expirationDate: Date;
+  observation: string;
+  received: boolean;
+  quantity: number;
+  productCode: ProductCodeVoucher;
+}
 
 export enum ReturnType {
   Expired = 1,
@@ -18,30 +39,4 @@ export enum VoucherStatus {
   Received,
   Completed,
   Rejected,
-}
-
-export interface VoucherResponse {
-  id: string;
-  number: number;
-  approvedDate: Date | null;
-  rejectedDate: Date | null;
-  customer: CustomerSummary;
-  status: CatalogResponse;
-  returnType: CatalogResponse;
-  createdAt: Date | null;
-  updatedAt: Date | null;
-  deletedAt: Date | null;
-  createdBy: UserSummary;
-  updatedBy: UserSummary | null;
-  deletedBy: UserSummary | null;
-  items: Item[];
-}
-
-export interface Item {
-  id: string;
-  expirationDate: Date;
-  observation: string;
-  received: boolean;
-  quantity: number;
-  productCode: CodeSummary;
 }

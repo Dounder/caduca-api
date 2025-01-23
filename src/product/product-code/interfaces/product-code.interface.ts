@@ -21,3 +21,9 @@ export interface ProductCodes {
   id: string;
   code: number;
 }
+
+export interface ProductCodeVoucher {
+  id: string;
+  code: number;
+  product: ProductSummary;
+}
