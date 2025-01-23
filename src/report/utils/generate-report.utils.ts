@@ -10,32 +10,33 @@ export class GenerateReportUtils {
   static readonly exHandler = new ExceptionHandler(this.logger, GenerateReportUtils.name);
 
   /**
-   * Generates an Excel report by streaming data in batches.
+   * Exports data to an Excel file with streaming support for large datasets.
    *
-   * @param options - The configuration options for report generation
-   * @param options.res - Express response object for streaming the file
-   * @param options.filename - Base name for the output Excel file
-   * @param options.worksheetName - Name of the worksheet in the Excel file
-   * @param options.columns - Column definitions for the Excel worksheet
-   * @param options.dataFetcher - Async function that fetches data in batches with pagination
-   *                             Should accept skip and limit parameters and return an array of rows
+   * @param options - The configuration options for the report generation
+   * @param options.res - The Express response object
+   * @param options.filename - The name of the file to be downloaded (default: 'report')
+   * @param options.worksheetName - The name of the worksheet in the Excel file (default: 'report')
+   * @param options.columns - The column definitions for the Excel worksheet
+   * @param options.dataFetcher - A function that fetches data in batches, receiving skip and limit parameters
    *
-   * @throws Will throw and handle errors if report generation fails
+   * @returns Promise<void>
+   *
+   * @throws Will throw an error if the report generation fails
    *
    * @remarks
-   * This method uses streaming to handle large datasets efficiently by:
-   * - Processing data in batches of 1000 rows
-   * - Using ExcelJS streaming writer
-   * - Committing rows immediately to manage memory usage
+   * The method implements pagination to handle large datasets efficiently.
+   * It processes data in batches of 1000 rows to prevent memory issues.
+   * Special characters in the filename are replaced with underscores.
+   * The final filename includes the current date in 'yyyy_MM_dd' format.
    *
    * @example
    * ```typescript
-   * await generateReport({
+   * await ReportUtils.exportExcelFile({
    *   res: response,
    *   filename: 'users',
    *   worksheetName: 'Users List',
-   *   columns: [{ header: 'Name', key: 'name' }],
-   *   dataFetcher: async (skip, limit) => await fetchUsers(skip, limit)
+   *   columns: [{header: 'Name', key: 'name'}, {header: 'Email', key: 'email'}],
+   *   dataFetcher: async (skip, limit) => await getUsersBatch(skip, limit)
    * });
    * ```
    */
@@ -46,12 +47,14 @@ export class GenerateReportUtils {
     columns,
     dataFetcher,
   }: ReportOptions): Promise<void> {
+    const formattedFilename = filename.replace(/[^a-zA-Z0-9]/g, '_'); // Remove special characters from filename
+
     // Set response headers for file download
     res.setHeader('Content-Type', 'application/vnd.openxmlformats-officedocument.spreadsheetml.sheet');
     res.setHeader('Access-Control-Expose-Headers', 'Content-Disposition');
     res.setHeader(
       'Content-Disposition',
-      `attachment; filename="usuarios_${DateUtils.getFormattedDate('yyyy_MM_dd')}.xlsx"`,
+      `attachment; filename="${formattedFilename}_${DateUtils.getFormattedDate('yyyy_MM_dd')}.xlsx"`,
     );
 
     // Create a new workbook and worksheet

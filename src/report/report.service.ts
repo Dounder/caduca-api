@@ -9,10 +9,30 @@ import { RoleNameEs } from 'src/user';
 @Injectable()
 export class ReportService {
   private readonly logger = new Logger(ReportService.name);
-  private readonly exHandler = new ExceptionHandler(this.logger, ReportService.name);
 
   constructor(private readonly prisma: PrismaService) {}
 
+  /**
+   * Generates and exports an Excel report containing user information.
+   * The report includes username, email, status, roles and creation date for each user.
+   *
+   * @param res - Express Response object used to send the generated Excel file
+   * @returns Promise that resolves when the file has been generated and sent
+   *
+   * @remarks
+   * The report is generated in chunks/batches to handle large datasets efficiently.
+   * Users' status is determined by the presence of a deletedAt timestamp.
+   * Role names are converted from enum values to Spanish display names.
+   *
+   * @example
+   * ```typescript
+   * // In a controller
+   * await reportService.generateUserReport(response);
+   * ```
+   *
+   * @throws {PrismaClientKnownRequestError} If there's an error accessing the database
+   * @throws {Error} If there's an error generating the Excel file
+   */
   async generateUserReport(@Res() res: Response): Promise<void> {
     this.logger.log('Generating user report');
 
@@ -56,6 +76,20 @@ export class ReportService {
     });
   }
 
+  /**
+   * Generates an Excel report containing customer information.
+   * The report includes customer code, name, address and status.
+   *
+   * @param res - Express Response object used to send the file to the client
+   * @returns Promise that resolves when the report has been generated and sent
+   *
+   * @remarks
+   * The report is generated in chunks to handle large datasets efficiently.
+   * Status is derived from deletedAt field: 'Activo' if null, 'Inactivo' otherwise.
+   * The Excel file will be named 'clientes.xlsx' with 'Clientes' as the worksheet name.
+   *
+   * @throws {Error} If there's an issue accessing the database or generating the Excel file
+   */
   async generateCustomerReport(@Res() res: Response): Promise<void> {
     this.logger.log('Generating customer report');
 
@@ -91,6 +125,28 @@ export class ReportService {
     });
   }
 
+  /**
+   * Generates an Excel report containing salesperson information.
+   *
+   * The report includes the following columns:
+   * - Code (Código)
+   * - Name (Nombre)
+   * - Status (Estado)
+   *
+   * The status is determined by the deletedAt field:
+   * - If deletedAt is null, status is "Activo"
+   * - If deletedAt has a value, status is "Inactivo"
+   *
+   * @param res - Express Response object used to send the generated Excel file
+   * @returns Promise that resolves when the file has been generated and sent
+   *
+   * @remarks
+   * The data is fetched in batches using the Prisma client.
+   * The Excel file is named 'vendedores.xlsx' and contains a worksheet named 'Vendedores'.
+   *
+   * @throws {PrismaClientKnownRequestError} If there's an error accessing the database
+   * @throws {Error} If there's an error generating the Excel file
+   */
   async generateSalespersonReport(@Res() res: Response): Promise<void> {
     this.logger.log('Generating salesperson report');
 
@@ -125,6 +181,25 @@ export class ReportService {
     });
   }
 
+  /**
+   * Generates an Excel report containing product information.
+   *
+   * @param res - Express Response object used to send the generated Excel file
+   *
+   * @remarks
+   * The report includes the following columns:
+   * - Código (Code): Product codes joined by commas
+   * - Nombre (Name): Product name
+   * - Estado (Status): Product status (Activo/Inactivo)
+   *
+   * The data is fetched in batches using Prisma, and the report is generated
+   * using the GenerateReportUtils utility class.
+   *
+   * @throws {PrismaClientKnownRequestError} If there's an error accessing the database
+   * @throws {Error} If there's an error generating the Excel file
+   *
+   * @returns Promise that resolves when the Excel file has been generated and sent
+   */
   async generateProductReport(@Res() res: Response): Promise<void> {
     this.logger.log('Generating product report');
 
