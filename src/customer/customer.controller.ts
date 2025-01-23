@@ -2,7 +2,7 @@ import { Cache, CACHE_MANAGER } from '@nestjs/cache-manager';
 import { Body, Controller, Delete, Get, Inject, Param, ParseIntPipe, Patch, Post, Query } from '@nestjs/common';
 
 import { Auth, GetUser } from 'src/auth';
-import { cacheUtil, ListResponse, PaginationDto, ParseCuidPipe } from 'src/common';
+import { CacheUtil, ListResponse, PaginationDto, ParseCuidPipe } from 'src/common';
 import { CurrentUser } from 'src/user';
 import { CustomerService } from './customer.service';
 import { CreateCustomerDto, UpdateCustomerDto } from './dto';
@@ -55,7 +55,7 @@ export class CustomerController {
     const { page, limit, summary, search } = params;
     const cacheKey = `customer:all:${page}:${limit}:${summary}:${search}`;
 
-    return cacheUtil.getCachedResponse({
+    return CacheUtil.getCachedResponse({
       cacheKey,
       cacheManager: this.cacheManager,
       callback: () => this.customerService.findAll(user, params),
@@ -91,7 +91,7 @@ export class CustomerController {
    */
   @Get(':id')
   findOne(@Param('id', ParseCuidPipe) id: string, @GetUser() user: CurrentUser): Promise<CustomerResponse> {
-    return cacheUtil.getCachedResponse({
+    return CacheUtil.getCachedResponse({
       cacheKey: `customer:id:${id}`,
       cacheManager: this.cacheManager,
       callback: () => this.customerService.findOne(id, user),
@@ -114,7 +114,7 @@ export class CustomerController {
    */
   @Get('code/:code')
   findByCode(@Param('code', ParseIntPipe) code: number, @GetUser() user: CurrentUser): Promise<CustomerResponse> {
-    return cacheUtil.getCachedResponse({
+    return CacheUtil.getCachedResponse({
       cacheKey: `customer:code:${code}`,
       cacheManager: this.cacheManager,
       callback: () => this.customerService.findByCode(code, user),

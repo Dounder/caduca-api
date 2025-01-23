@@ -5,3 +5,8 @@ export interface ProductCodeSummary {
   code: number;
   product: ProductSummary;
 }
+
+export interface CodeListResponse {
+  id: string;
+  code: number;
+}

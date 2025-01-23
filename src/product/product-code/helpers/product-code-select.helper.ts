@@ -1,4 +1,4 @@
-import { PRODUCT_SELECT_FROM_CODE, PRODUCT_SELECT_FROM_CODE_SUMMARY } from 'src/product/helper';
+import { PRODUCT_SELECT_FROM_CODE, PRODUCT_SELECT_FROM_CODE_SUMMARY } from 'src/product/helpers';
 import { USER_AUDIT_SELECT } from 'src/user';
 
 export const PRODUCT_CODE_SELECT_SUMMARY = {

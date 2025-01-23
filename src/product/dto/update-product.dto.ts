@@ -1,19 +1,24 @@
-import { IsNotEmpty, MaxLength } from 'class-validator';
+import { PartialType } from '@nestjs/mapped-types';
+import { CreateProductDto } from './create-product.dto';
 
 /**
- * Data transfer object used for updating product information.
+ * Data Transfer Object (DTO) for updating a product entity.
+ * Extends the CreateProductDto as a partial type, making all properties optional.
  *
- * This DTO validates input data when updating a product entity.
- *
- * @class
- *
- * @property {string} name - The product name
  * @remarks
- * - Name is required and cannot be empty
- * - Name must not exceed 300 characters
+ * This DTO uses NestJS's `PartialType` utility to create a type with all properties
+ * from CreateProductDto set as optional. This is useful for PATCH operations where
+ * only some fields might need to be updated.
+ *
+ * @example
+ * ```typescript
+ * // Example usage:
+ * const updateData: UpdateProductDto = {
+ *   name: "Updated Product Name",
+ *   // Other properties are optional
+ * };
+ * ```
+ *
+ * @see {@link CreateProductDto} - The base DTO class this extends from
  */
-export class UpdateProductDto {
-  @IsNotEmpty()
-  @MaxLength(300)
-  name: string;
-}
+export class UpdateProductDto extends PartialType(CreateProductDto) {}
