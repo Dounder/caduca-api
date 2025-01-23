@@ -1,5 +1,5 @@
 import { BaseListResponse, BaseResponse } from 'src/common';
-import { CodeListResponse } from '../product-code';
+import { ProductCodes } from '../product-code';
 
 export interface ProductSummary {
   id: string;
@@ -10,11 +10,11 @@ export interface ProductSummary {
 export interface ProductResponse extends BaseResponse {
   name: string;
   slug: string;
-  codes: CodeListResponse[];
+  codes: ProductCodes[];
 }
 
 export interface ProductListResponse extends BaseListResponse {
   name: string;
   slug: string;
-  codes: CodeListResponse[];
+  codes: ProductCodes[];
 }

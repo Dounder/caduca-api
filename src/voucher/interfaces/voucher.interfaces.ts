@@ -1,6 +1,6 @@
 import { CatalogResponse } from 'src/common';
 import { CustomerSummary } from 'src/customer';
-import { ProductCodeSummary } from 'src/product';
+import { CodeSummary } from 'src/product';
 import { UserSummary } from 'src/user';
 
 export enum ReturnType {
@@ -43,5 +43,5 @@ export interface Item {
   observation: string;
   received: boolean;
   quantity: number;
-  productCode: ProductCodeSummary;
+  productCode: CodeSummary;
 }
