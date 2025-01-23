@@ -2,8 +2,7 @@ import { Cache, CACHE_MANAGER } from '@nestjs/cache-manager';
 import { ConflictException, HttpStatus, Inject, Injectable, Logger, NotFoundException } from '@nestjs/common';
 import { Prisma, Product } from '@prisma/client';
 
-import { PaginationDto } from 'src/common';
-import { ExceptionHandler, hasRoles } from 'src/helpers';
+import { ExceptionHandler, hasRoles, PaginationDto } from 'src/common';
 import { PrismaService } from 'src/prisma/prisma.service';
 import { CurrentUser, RoleId } from 'src/user';
 import { CreateProductDto, UpdateProductDto } from './dto';
@@ -118,7 +117,7 @@ export class ProductService {
     try {
       const dbProduct = await this.findOne({ id, user });
 
-      const { newCode, name } = updateProductDto;
+      const { name } = updateProductDto;
 
       if (dbProduct.name === name) return dbProduct;
 
@@ -133,11 +132,6 @@ export class ProductService {
           select: PRODUCT_SELECT_SINGLE,
         });
 
-        if (newCode) {
-          await tx.productCode.create({
-            data: { product: { connect: { id: product.id } }, createdBy: { connect: { id: user.id } } },
-          });
-        }
         return product;
       });
 

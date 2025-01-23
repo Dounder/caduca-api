@@ -2,7 +2,7 @@ import { Cache, CACHE_MANAGER } from '@nestjs/cache-manager';
 import { ConflictException, HttpStatus, Inject, Injectable, Logger, NotFoundException } from '@nestjs/common';
 
 import { ListResponse, PaginationDto } from 'src/common';
-import { ExceptionHandler, hasRoles } from 'src/helpers';
+import { ExceptionHandler, hasRoles } from 'src/common';
 import { PrismaService } from 'src/prisma/prisma.service';
 import { CurrentUser, RoleId } from 'src/user';
 import { CreateSalespersonDto, UpdateSalespersonDto } from './dto';

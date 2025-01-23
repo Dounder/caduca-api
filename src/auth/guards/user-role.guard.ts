@@ -11,7 +11,7 @@ import { Observable } from 'rxjs';
 
 import { META_ROLES_KEY } from '../decorators';
 import { CurrentUser, RoleId } from 'src/user';
-import { hasRoles } from 'src/helpers';
+import { hasRoles } from 'src/common';
 
 /**
  * Guard that checks if a user has the required roles to access a route.

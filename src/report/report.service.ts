@@ -1,13 +1,10 @@
-import { GenerateReportUtils } from './utils/';
 import { Injectable, Logger, Res } from '@nestjs/common';
-import * as ExcelJS from 'exceljs';
 import { Response } from 'express';
 
-import { DateUtils } from 'src/common';
-import { ExceptionHandler } from 'src/helpers';
+import { GenerateReportUtils } from './utils';
+import { ExceptionHandler } from 'src/common';
 import { PrismaService } from 'src/prisma/prisma.service';
 import { RoleNameEs } from 'src/user';
-import { ReportOptions } from './interfaces';
 
 @Injectable()
 export class ReportService {

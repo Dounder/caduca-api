@@ -3,7 +3,7 @@ import * as ExcelJS from 'exceljs';
 import { DateUtils } from 'src/common';
 import { ReportOptions } from '../interfaces';
 import { Logger } from '@nestjs/common';
-import { ExceptionHandler } from 'src/helpers';
+import { ExceptionHandler } from 'src/common';
 
 export class GenerateReportUtils {
   static readonly logger = new Logger(GenerateReportUtils.name);
