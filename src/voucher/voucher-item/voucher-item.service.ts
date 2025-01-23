@@ -3,7 +3,7 @@ import { BadRequestException, HttpStatus, Injectable, Logger } from '@nestjs/com
 import { PaginationDto } from 'src/common';
 import { ExceptionHandler, hasRoles } from 'src/common';
 import { PrismaService } from 'src/prisma/prisma.service';
-import { CurrentUser, RoleId } from 'src/user';
+import { User, RoleId } from 'src/user';
 import { CreateVoucherItemDto, UpdateVoucherItemDto } from './dto';
 import { VOUCHER_ITEM_SINGLE } from './helpers';
 
@@ -14,7 +14,7 @@ export class VoucherItemService {
 
   constructor(private readonly prisma: PrismaService) {}
 
-  async create(createVoucherItemDto: CreateVoucherItemDto, user: CurrentUser) {
+  async create(createVoucherItemDto: CreateVoucherItemDto, user: User) {
     const message = `Creating voucher item: ${JSON.stringify(createVoucherItemDto)}, user: ${user.username} (${user.id})`;
     this.logger.log(message);
     try {
@@ -41,7 +41,7 @@ export class VoucherItemService {
     }
   }
 
-  async findAll(pagination: PaginationDto, user: CurrentUser) {
+  async findAll(pagination: PaginationDto, user: User) {
     const { page, limit } = pagination;
     const isAdmin = hasRoles(user.roles, [RoleId.Admin]);
     const where = isAdmin ? {} : { deletedAt: null };
@@ -61,7 +61,7 @@ export class VoucherItemService {
     return { meta: { total, page, lastPage }, data };
   }
 
-  async update(updateVoucherItemDto: UpdateVoucherItemDto, user: CurrentUser) {
+  async update(updateVoucherItemDto: UpdateVoucherItemDto, user: User) {
     try {
       const { voucherId, items } = updateVoucherItemDto;
 

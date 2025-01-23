@@ -4,7 +4,7 @@ import { Prisma } from '@prisma/client';
 
 import { CacheUtil, ExceptionHandler, FindAllParams, hasRoles, ListResponse } from 'src/common';
 import { PrismaService } from 'src/prisma/prisma.service';
-import { CurrentUser, RoleId } from 'src/user';
+import { User, RoleId } from 'src/user';
 import { CreateProductCodeDto } from './dto';
 import { PRODUCT_CODE_SELECT_LIST, PRODUCT_CODE_SELECT_LIST_SUMMARY, PRODUCT_CODE_SELECT_SINGLE } from './helpers';
 import { Code, CodeList, CodeSummary } from './interfaces';
@@ -46,7 +46,7 @@ export class ProductCodeService {
    * - Logs the creation attempt with user details
    * - Handles errors through the exception handler service
    */
-  async create(createProductCodeDto: CreateProductCodeDto, user: CurrentUser): Promise<Code> {
+  async create(createProductCodeDto: CreateProductCodeDto, user: User): Promise<Code> {
     this.logger.log(
       `Creating product code: ${JSON.stringify(createProductCodeDto)}, user: ${user.username} (${user.id})`,
     );
@@ -123,7 +123,7 @@ export class ProductCodeService {
    * - For non-admin users, only active (non-deleted) codes are returned
    * - The returned code contains only the fields specified in PRODUCT_CODE_SELECT_SINGLE
    */
-  async findByCode(code: number, user: CurrentUser): Promise<Code> {
+  async findByCode(code: number, user: User): Promise<Code> {
     this.logger.log(`Fetching product by code: ${code}, user: ${user.username} (${user.id})`);
     try {
       const isAdmin = hasRoles(user.roles, [RoleId.Admin]);
@@ -154,7 +154,7 @@ export class ProductCodeService {
    * - Non-admin users can only see active (non-deleted) product codes
    * - The method includes logging for audit purposes
    */
-  async findOne(id: string, user: CurrentUser): Promise<Code> {
+  async findOne(id: string, user: User): Promise<Code> {
     this.logger.log(`Fetching product by id: ${id}, user: ${user.username} (${user.id})`);
     try {
       const isAdmin = hasRoles(user.roles, [RoleId.Admin]);
@@ -191,7 +191,7 @@ export class ProductCodeService {
    * - The cache is cleared after a successful deletion
    * - The method validates the existence and permissions via findOne before deletion
    */
-  async remove(id: string, user: CurrentUser): Promise<Code> {
+  async remove(id: string, user: User): Promise<Code> {
     this.logger.log(`Deleting product code: ${id}, user: ${user.username} (${user.id})`);
     try {
       await this.findOne(id, user);
@@ -240,7 +240,7 @@ export class ProductCodeService {
    * - Connect the updatedBy relation to current user
    * - Clear the cache after successful restoration
    */
-  async restore(id: string, user: CurrentUser): Promise<Code> {
+  async restore(id: string, user: User): Promise<Code> {
     this.logger.log(`Restoring product code: ${id}, user: ${user.username} (${user.id})`);
 
     try {

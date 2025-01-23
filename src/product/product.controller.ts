@@ -2,7 +2,7 @@ import { Cache, CACHE_MANAGER } from '@nestjs/cache-manager';
 import { Body, Controller, Delete, Get, Inject, Param, Patch, Post, Query } from '@nestjs/common';
 import { Auth, GetUser } from 'src/auth';
 import { CacheUtil, PaginationDto, ParseCuidPipe } from 'src/common';
-import { CurrentUser, RoleId } from 'src/user';
+import { User, RoleId } from 'src/user';
 import { CreateProductDto, UpdateProductDto } from './dto';
 import { ProductService } from './product.service';
 
@@ -39,7 +39,7 @@ export class ProductController {
    */
   @Post()
   @Auth(RoleId.Admin, RoleId.Manager, RoleId.Developer)
-  create(@Body() createProductDto: CreateProductDto, @GetUser() user: CurrentUser) {
+  create(@Body() createProductDto: CreateProductDto, @GetUser() user: User) {
     return this.productService.create(createProductDto, user);
   }
 
@@ -58,7 +58,7 @@ export class ProductController {
    * Otherwise, the product service will be called and the result will be cached.
    */
   @Get()
-  findAll(@GetUser() user: CurrentUser, @Query() params: PaginationDto) {
+  findAll(@GetUser() user: User, @Query() params: PaginationDto) {
     const cacheKey = `product:page:${params.page}:limit:${params.limit}:summary:${params.summary}:search:${params.search}`;
     return CacheUtil.getCachedResponse({
       cacheKey,
@@ -100,7 +100,7 @@ export class ProductController {
    * @throws {ForbiddenException} When the user doesn't have permission to access the product
    */
   @Get(':id')
-  findOne(@Param('id', ParseCuidPipe) id: string, @GetUser() user: CurrentUser) {
+  findOne(@Param('id', ParseCuidPipe) id: string, @GetUser() user: User) {
     return CacheUtil.getCachedResponse({
       cacheKey: `product:${id}`,
       cacheManager: this.cacheManager,
@@ -112,7 +112,7 @@ export class ProductController {
    * Retrieves a product by its slug identifier with caching support.
    *
    * @param {string} slug - The unique slug identifier of the product
-   * @param {CurrentUser} user - The current authenticated user
+   * @param {User} user - The current authenticated user
    * @returns {Promise<Product>} A promise that resolves to the found product
    *
    * @remarks
@@ -124,7 +124,7 @@ export class ProductController {
    * @throws {NotFoundException} If the product is not found
    */
   @Get('slug/:slug')
-  findOneBySlug(@Param('slug') slug: string, @GetUser() user: CurrentUser) {
+  findOneBySlug(@Param('slug') slug: string, @GetUser() user: User) {
     return CacheUtil.getCachedResponse({
       cacheKey: `product:slug:${slug}`,
       cacheManager: this.cacheManager,
@@ -150,11 +150,7 @@ export class ProductController {
    */
   @Patch(':id')
   @Auth(RoleId.Admin, RoleId.Manager, RoleId.Developer)
-  update(
-    @Param('id', ParseCuidPipe) id: string,
-    @Body() updateProductDto: UpdateProductDto,
-    @GetUser() user: CurrentUser,
-  ) {
+  update(@Param('id', ParseCuidPipe) id: string, @Body() updateProductDto: UpdateProductDto, @GetUser() user: User) {
     return this.productService.update(id, updateProductDto, user);
   }
 
@@ -168,7 +164,7 @@ export class ProductController {
    */
   @Delete(':id')
   @Auth(RoleId.Admin, RoleId.Developer)
-  remove(@Param('id', ParseCuidPipe) id: string, @GetUser() user: CurrentUser) {
+  remove(@Param('id', ParseCuidPipe) id: string, @GetUser() user: User) {
     return this.productService.remove(id, user);
   }
 
@@ -190,7 +186,7 @@ export class ProductController {
    */
   @Patch(':id/restore')
   @Auth(RoleId.Admin, RoleId.Developer)
-  restore(@Param('id', ParseCuidPipe) id: string, @GetUser() user: CurrentUser) {
+  restore(@Param('id', ParseCuidPipe) id: string, @GetUser() user: User) {
     return this.productService.restore(id, user);
   }
 }

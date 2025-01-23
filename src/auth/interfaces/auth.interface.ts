@@ -1,10 +1,12 @@
+import { User } from 'src/user';
+
 export interface JwtPayload {
   id: string;
 }
 
 export interface AuthResponse {
   token: string;
-  user: any;
+  user: User;
 }
 
 export interface SignedToken extends JwtPayload {

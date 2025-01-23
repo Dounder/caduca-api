@@ -4,14 +4,14 @@ import { Prisma } from '@prisma/client';
 
 import { CacheUtil, ExceptionHandler, hasRoles, ListResponse, PaginationDto } from 'src/common';
 import { PrismaService } from 'src/prisma/prisma.service';
-import { CurrentUser, RoleId } from 'src/user';
+import { User, RoleId } from 'src/user';
 import { CreateProductDto, UpdateProductDto } from './dto';
 import { PRODUCT_SELECT_LIST, PRODUCT_SELECT_LIST_SUMMARY, PRODUCT_SELECT_SINGLE } from './helpers';
 import { ProductListResponse, ProductResponse, ProductSummary } from './interfaces';
 
 interface FindOneProps {
   id: string;
-  user: CurrentUser;
+  user: User;
   slug?: boolean;
 }
 
@@ -55,7 +55,7 @@ export class ProductService {
    *
    * @throws Will delegate error handling to ExceptionHandler service
    */
-  async create(createProductDto: CreateProductDto, user: CurrentUser): Promise<ProductResponse> {
+  async create(createProductDto: CreateProductDto, user: User): Promise<ProductResponse> {
     this.logger.log(`Creating product: ${JSON.stringify(createProductDto)}, user: ${user.username} (${user.id})`);
     try {
       const { newCode, ...productData } = createProductDto;
@@ -108,7 +108,7 @@ export class ProductService {
    *
    * @throws {PrismaClientKnownRequestError} When database query fails
    */
-  async findAll(user: CurrentUser, params: PaginationDto): Promise<ListResponse<ProductListResponse | ProductSummary>> {
+  async findAll(user: User, params: PaginationDto): Promise<ListResponse<ProductListResponse | ProductSummary>> {
     this.logger.log(`Fetching products: ${JSON.stringify(params)}, user: ${user.username} (${user.id})`);
     const { page, limit, summary, search } = params;
     const isAdmin = hasRoles(user.roles, [RoleId.Admin]);
@@ -196,7 +196,7 @@ export class ProductService {
    *
    * @throws Will delegate error handling to the exception handler if update fails
    */
-  async update(id: string, updateProductDto: UpdateProductDto, user: CurrentUser): Promise<ProductResponse> {
+  async update(id: string, updateProductDto: UpdateProductDto, user: User): Promise<ProductResponse> {
     this.logger.log(
       `Updating product: ${JSON.stringify({ id, ...updateProductDto })}, user: ${user.username} (${user.id})`,
     );
@@ -246,7 +246,7 @@ export class ProductService {
    * - The cache is cleared after successful deletion
    * - The operation logs the deletion attempt with user information
    */
-  async remove(id: string, user: CurrentUser): Promise<ProductResponse> {
+  async remove(id: string, user: User): Promise<ProductResponse> {
     this.logger.log(`Deleting product: ${id}, user: ${user.username} (${user.id})`);
     try {
       const product = await this.findOne({ id, user });
@@ -292,7 +292,7 @@ export class ProductService {
    * - The cache is cleared after a successful restore
    * - The operation is logged with user information
    */
-  async restore(id: string, user: CurrentUser): Promise<ProductResponse> {
+  async restore(id: string, user: User): Promise<ProductResponse> {
     this.logger.log(`Restoring product: ${id}, user: ${user.username} (${user.id})`);
     try {
       const product = await this.findOne({ id, user });

@@ -3,7 +3,7 @@ import { ConflictException, HttpStatus, Inject, Injectable, Logger, NotFoundExce
 
 import { CacheUtil, ExceptionHandler, hasRoles, ListResponse, PaginationDto } from 'src/common';
 import { PrismaService } from 'src/prisma/prisma.service';
-import { CurrentUser, RoleId } from 'src/user';
+import { User, RoleId } from 'src/user';
 import { CreateCustomerDto, UpdateCustomerDto } from './dto';
 import { CUSTOMER_SELECT_LIST, CUSTOMER_SELECT_LIST_SUMMARY, CUSTOMER_SELECT_SINGLE } from './helper';
 import { CustomerListResponse, CustomerResponse, CustomerSummary } from './interfaces';
@@ -40,7 +40,7 @@ export class CustomerService {
    * - Links the customer to the creating user
    * - Clears related cache
    */
-  async create(createCustomerDto: CreateCustomerDto, user: CurrentUser): Promise<CustomerResponse> {
+  async create(createCustomerDto: CreateCustomerDto, user: User): Promise<CustomerResponse> {
     const message = `Creating customer: ${JSON.stringify(createCustomerDto)}, user: ${user.username} (${user.id})`;
     this.logger.log(message);
     try {
@@ -82,10 +82,7 @@ export class CustomerService {
    *
    * @throws {Exception} Handled by ExceptionHandler if any error occurs during the operation
    */
-  async findAll(
-    user: CurrentUser,
-    params: PaginationDto,
-  ): Promise<ListResponse<CustomerListResponse | CustomerSummary>> {
+  async findAll(user: User, params: PaginationDto): Promise<ListResponse<CustomerListResponse | CustomerSummary>> {
     this.logger.log(`Fetching customers: ${JSON.stringify(params)}, user: ${user.username} (${user.id})`);
     try {
       const { page, limit, summary, search } = params;
@@ -136,7 +133,7 @@ export class CustomerService {
    * @throws {NotFoundException} When customer is not found
    * @throws Propagates any other errors through exception handler
    */
-  async findOne(id: string, user: CurrentUser): Promise<CustomerResponse> {
+  async findOne(id: string, user: User): Promise<CustomerResponse> {
     this.logger.log(`Fetching customer: ${id}, user: ${user.username} (${user.id})`);
     try {
       const isAdmin = hasRoles(user.roles, [RoleId.Admin]);
@@ -169,7 +166,7 @@ export class CustomerService {
    * - For non-admin users, only active (non-deleted) customers are returned
    * - Uses CUSTOMER_SELECT_SINGLE to determine which fields to return
    */
-  async findByCode(code: number, user: CurrentUser): Promise<CustomerResponse> {
+  async findByCode(code: number, user: User): Promise<CustomerResponse> {
     this.logger.log(`Fetching customer: ${code}, user: ${user.username} (${user.id})`);
     try {
       const isAdmin = hasRoles(user.roles, [RoleId.Admin]);
@@ -210,7 +207,7 @@ export class CustomerService {
    * - User doesn't have permission to update the customer
    * - Database constraints are violated
    */
-  async update(id: string, updateCustomerDto: UpdateCustomerDto, user: CurrentUser): Promise<CustomerResponse> {
+  async update(id: string, updateCustomerDto: UpdateCustomerDto, user: User): Promise<CustomerResponse> {
     const message = `Updating customer: ${JSON.stringify({ id, ...updateCustomerDto })}, user: ${user.username} (${user.id})`;
     this.logger.log(message);
     try {
@@ -251,7 +248,7 @@ export class CustomerService {
    * - Clears the cache after successful deletion
    * - Associates the deleting user with the customer record
    */
-  async remove(id: string, user: CurrentUser): Promise<CustomerResponse> {
+  async remove(id: string, user: User): Promise<CustomerResponse> {
     const message = `Deleting customer: ${id}, user: ${user.username} (${user.id})`;
     this.logger.log(message);
     try {
@@ -302,7 +299,7 @@ export class CustomerService {
    *
    * The operation is atomic and will either complete fully or fail entirely.
    */
-  async restore(id: string, user: CurrentUser): Promise<CustomerResponse> {
+  async restore(id: string, user: User): Promise<CustomerResponse> {
     const message = `Restoring customer: ${id}, user: ${user.username} (${user.id})`;
     this.logger.log(message);
     try {

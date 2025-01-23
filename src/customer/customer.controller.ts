@@ -3,7 +3,7 @@ import { Body, Controller, Delete, Get, Inject, Param, ParseIntPipe, Patch, Post
 
 import { Auth, GetUser } from 'src/auth';
 import { CacheUtil, ListResponse, PaginationDto, ParseCuidPipe } from 'src/common';
-import { CurrentUser } from 'src/user';
+import { User } from 'src/user';
 import { CustomerService } from './customer.service';
 import { CreateCustomerDto, UpdateCustomerDto } from './dto';
 import { CustomerListResponse, CustomerResponse, CustomerSummary } from './interfaces';
@@ -25,7 +25,7 @@ export class CustomerController {
    * @throws {BadRequestException} If validation fails for customer data
    */
   @Post()
-  create(@Body() createCustomerDto: CreateCustomerDto, @GetUser() user: CurrentUser): Promise<CustomerResponse> {
+  create(@Body() createCustomerDto: CreateCustomerDto, @GetUser() user: User): Promise<CustomerResponse> {
     return this.customerService.create(createCustomerDto, user);
   }
 
@@ -49,7 +49,7 @@ export class CustomerController {
    */
   @Get()
   findAll(
-    @GetUser() user: CurrentUser,
+    @GetUser() user: User,
     @Query() params: PaginationDto,
   ): Promise<ListResponse<CustomerListResponse | CustomerSummary>> {
     const { page, limit, summary, search } = params;
@@ -79,7 +79,7 @@ export class CustomerController {
    * Retrieves a single customer by their ID, with caching support
    *
    * @param {string} id - The CUID identifier of the customer to retrieve
-   * @param {CurrentUser} user - The authenticated user making the request
+   * @param {User} user - The authenticated user making the request
    * @returns {Promise<CustomerResponse>} A promise that resolves to the customer data
    *
    * @throws {NotFoundException} When customer is not found
@@ -87,10 +87,10 @@ export class CustomerController {
    *
    * @example
    * // Returns cached customer if available, otherwise fetches from database
-   * findOne('cuid123', currentUser)
+   * findOne('cuid123', user)
    */
   @Get(':id')
-  findOne(@Param('id', ParseCuidPipe) id: string, @GetUser() user: CurrentUser): Promise<CustomerResponse> {
+  findOne(@Param('id', ParseCuidPipe) id: string, @GetUser() user: User): Promise<CustomerResponse> {
     return CacheUtil.getCachedResponse({
       cacheKey: `customer:id:${id}`,
       cacheManager: this.cacheManager,
@@ -113,7 +113,7 @@ export class CustomerController {
    * @throws {ForbiddenException} When the user doesn't have permission to access the customer
    */
   @Get('code/:code')
-  findByCode(@Param('code', ParseIntPipe) code: number, @GetUser() user: CurrentUser): Promise<CustomerResponse> {
+  findByCode(@Param('code', ParseIntPipe) code: number, @GetUser() user: User): Promise<CustomerResponse> {
     return CacheUtil.getCachedResponse({
       cacheKey: `customer:code:${code}`,
       cacheManager: this.cacheManager,
@@ -136,7 +136,7 @@ export class CustomerController {
   update(
     @Param('id', ParseCuidPipe) id: string,
     @Body() updateCustomerDto: UpdateCustomerDto,
-    @GetUser() user: CurrentUser,
+    @GetUser() user: User,
   ): Promise<CustomerResponse> {
     return this.customerService.update(id, updateCustomerDto, user);
   }
@@ -150,7 +150,7 @@ export class CustomerController {
    * @throws NotFoundException if customer with given id doesn't exist
    */
   @Delete(':id')
-  remove(@Param('id', ParseCuidPipe) id: string, @GetUser() user: CurrentUser): Promise<CustomerResponse> {
+  remove(@Param('id', ParseCuidPipe) id: string, @GetUser() user: User): Promise<CustomerResponse> {
     return this.customerService.remove(id, user);
   }
 
@@ -158,13 +158,13 @@ export class CustomerController {
    * Restores a previously soft-deleted customer.
    *
    * @param {string} id - The CUID identifier of the customer to restore
-   * @param {CurrentUser} user - The current authenticated user performing the restoration
+   * @param {User} user - The current authenticated user performing the restoration
    * @returns {Promise<CustomerResponse>} A promise that resolves to the restored customer data
    * @throws {NotFoundException} When the customer with the given ID is not found
    * @throws {UnauthorizedException} When the user doesn't have permission to restore customers
    */
   @Patch(':id/restore')
-  restore(@Param('id', ParseCuidPipe) id: string, @GetUser() user: CurrentUser): Promise<CustomerResponse> {
+  restore(@Param('id', ParseCuidPipe) id: string, @GetUser() user: User): Promise<CustomerResponse> {
     return this.customerService.restore(id, user);
   }
 }

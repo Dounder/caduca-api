@@ -9,9 +9,9 @@ import {
 import { Reflector } from '@nestjs/core';
 import { Observable } from 'rxjs';
 
-import { META_ROLES_KEY } from '../decorators';
-import { CurrentUser, RoleId } from 'src/user';
 import { hasRoles } from 'src/common';
+import { RoleId, User } from 'src/user';
+import { META_ROLES_KEY } from '../decorators';
 
 /**
  * Guard that checks if a user has the required roles to access a route.
@@ -51,7 +51,7 @@ export class UserRoleGuard implements CanActivate {
       return true;
     }
 
-    const user: CurrentUser = context.switchToHttp().getRequest().user;
+    const user: User = context.switchToHttp().getRequest().user;
 
     if (!user) {
       this.logger.error(`No user inside the request, make sure that we used the AuthGuard`);

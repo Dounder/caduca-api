@@ -3,7 +3,7 @@ import { Body, Controller, Delete, Get, Inject, Param, ParseIntPipe, Patch, Post
 import { Cache, CACHE_MANAGER } from '@nestjs/cache-manager';
 import { Auth, GetUser } from 'src/auth';
 import { CacheUtil, ListResponse, PaginationDto, ParseCuidPipe } from 'src/common';
-import { CurrentUser, RoleId } from 'src/user';
+import { User, RoleId } from 'src/user';
 import { CreateProductCodeDto } from './dto';
 import { Code, CodeSummary } from './interfaces';
 import { ProductCodeService } from './product-code.service';
@@ -37,7 +37,7 @@ export class ProductCodeController {
    */
   @Post()
   @Auth(RoleId.Admin, RoleId.Manager, RoleId.Developer)
-  create(@Body() createProductCodeDto: CreateProductCodeDto, @GetUser() user: CurrentUser): Promise<Code> {
+  create(@Body() createProductCodeDto: CreateProductCodeDto, @GetUser() user: User): Promise<Code> {
     return this.productCodeService.create(createProductCodeDto, user);
   }
 
@@ -56,7 +56,7 @@ export class ProductCodeController {
    * for better performance and reduced payload size.
    */
   @Get('all')
-  findAll(@Query() pagination: PaginationDto, @GetUser() user: CurrentUser): Promise<ListResponse<Code | CodeSummary>> {
+  findAll(@Query() pagination: PaginationDto, @GetUser() user: User): Promise<ListResponse<Code | CodeSummary>> {
     const cacheKey = `product_codes:page:${pagination.page}:limit:${pagination.limit}`;
     return CacheUtil.getCachedResponse({
       cacheKey,
@@ -97,7 +97,7 @@ export class ProductCodeController {
    * Cache invalidation should be handled when the code is updated or deleted.
    */
   @Get(':code')
-  findOne(@Param('code', ParseIntPipe) code: number, @GetUser() user: CurrentUser): Promise<Code> {
+  findOne(@Param('code', ParseIntPipe) code: number, @GetUser() user: User): Promise<Code> {
     return CacheUtil.getCachedResponse({
       cacheKey: `product_code:${code}`,
       cacheManager: this.cacheManager,
@@ -115,7 +115,7 @@ export class ProductCodeController {
    */
   @Delete(':id')
   @Auth(RoleId.Admin, RoleId.Developer)
-  remove(@Param('id', ParseCuidPipe) id: string, @GetUser() user: CurrentUser): Promise<Code> {
+  remove(@Param('id', ParseCuidPipe) id: string, @GetUser() user: User): Promise<Code> {
     return this.productCodeService.remove(id, user);
   }
 
@@ -136,7 +136,7 @@ export class ProductCodeController {
    */
   @Patch(':id/restore')
   @Auth(RoleId.Admin, RoleId.Developer)
-  restore(@Param('id', ParseCuidPipe) id: string, @GetUser() user: CurrentUser): Promise<Code> {
+  restore(@Param('id', ParseCuidPipe) id: string, @GetUser() user: User): Promise<Code> {
     return this.productCodeService.restore(id, user);
   }
 }

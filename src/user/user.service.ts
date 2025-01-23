@@ -1,3 +1,4 @@
+import { Cache, CACHE_MANAGER } from '@nestjs/cache-manager';
 import {
   BadRequestException,
   ConflictException,
@@ -7,16 +8,13 @@ import {
   Logger,
   NotFoundException,
 } from '@nestjs/common';
-import { User } from '@prisma/client';
 import * as bcrypt from 'bcrypt';
 
-import { Cache, CACHE_MANAGER } from '@nestjs/cache-manager';
-import { ListResponse, PaginationDto } from 'src/common';
-import { ExceptionHandler, hasRoles } from 'src/common';
+import { ExceptionHandler, hasRoles, ListResponse, PaginationDto } from 'src/common';
 import { PrismaService } from 'src/prisma/prisma.service';
 import { CreateUserDto, UpdateUserDto } from './dto';
 import { USER_SELECT_LIST, USER_SELECT_LIST_SUMMARY, USER_SELECT_SINGLE } from './helpers';
-import { CurrentUser, PrismaUserList, RoleId, UserResponse, UserSummary } from './interfaces';
+import { PrismaUser, RoleId, User, UserSummary, UserWithPwd } from './interfaces';
 
 @Injectable()
 export class UserService {
@@ -28,7 +26,7 @@ export class UserService {
     @Inject(CACHE_MANAGER) private readonly cacheManager: Cache,
   ) {}
 
-  async create(createUserDto: CreateUserDto, user: CurrentUser): Promise<UserResponse> {
+  async create(createUserDto: CreateUserDto, user: User): Promise<UserWithPwd> {
     try {
       const { password, roles, ...data } = createUserDto;
       this.logger.log(`Creating user: ${JSON.stringify({ ...data, roles })}`);
@@ -49,7 +47,7 @@ export class UserService {
         select: USER_SELECT_SINGLE,
       });
 
-      const [cleanUser] = this.cleanUser([newUser]);
+      const [cleanUser] = this.mapUserWithRoles([newUser]);
 
       this.clearCache();
 
@@ -65,7 +63,7 @@ export class UserService {
     }
   }
 
-  async findAll(user: CurrentUser, params: PaginationDto): Promise<ListResponse<User>> {
+  async findAll(user: User, params: PaginationDto): Promise<ListResponse<User | UserSummary>> {
     this.logger.log(`Fetching users: ${JSON.stringify(params)}, user: ${user.id} - ${user.username}`);
     const { page, limit, summary, search } = params;
     const isAdmin = hasRoles(user.roles, [RoleId.Admin]);
@@ -98,11 +96,11 @@ export class UserService {
 
     return {
       meta: { total, page, lastPage },
-      data: summary ? data : this.cleanUser(data as PrismaUserList[]),
+      data: summary ? data : this.mapUserWithRoles(data as PrismaUser[]),
     };
   }
 
-  async findOne(id: string, currentUser: CurrentUser): Promise<UserResponse> {
+  async findOne(id: string, currentUser: User): Promise<User> {
     this.logger.log(`Fetching user: ${id}, user: ${currentUser.id} - ${currentUser.username}`);
     const isAdmin = hasRoles(currentUser.roles, [RoleId.Admin]);
 
@@ -113,10 +111,10 @@ export class UserService {
     if (!user)
       throw new NotFoundException({ status: HttpStatus.NOT_FOUND, message: `[ERROR] User with id ${id} not found` });
 
-    return this.cleanUser([user])[0];
+    return this.mapUserWithRoles([user])[0];
   }
 
-  async findByUsername(username: string, currentUser: CurrentUser): Promise<UserResponse> {
+  async findByUsername(username: string, currentUser: User): Promise<User> {
     this.logger.log(`Fetching user: ${username}, user: ${currentUser.id} - ${currentUser.username}`);
     const idAdmin = hasRoles(currentUser.roles, [RoleId.Admin]);
     const where = idAdmin ? { username } : { username, deletedAt: null };
@@ -129,10 +127,10 @@ export class UserService {
         message: `[ERROR] User with username ${username} not found`,
       });
 
-    return this.cleanUser([user])[0];
+    return this.mapUserWithRoles([user])[0];
   }
 
-  async findOneWithSummary(id: string, currentUser: CurrentUser): Promise<UserSummary> {
+  async findOneWithSummary(id: string, currentUser: User): Promise<UserSummary> {
     this.logger.log(`Fetching user: ${id}, user: ${currentUser.id} - ${currentUser.username}`);
     const idAdmin = hasRoles(currentUser.roles, [RoleId.Admin]);
     const where = idAdmin ? { id } : { id, deletedAt: null };
@@ -145,7 +143,7 @@ export class UserService {
     return user;
   }
 
-  async findByIds(ids: string[], currentUser: CurrentUser): Promise<UserSummary[]> {
+  async findByIds(ids: string[], currentUser: User): Promise<UserSummary[]> {
     this.logger.log(`Fetching users: ${ids}, user: ${currentUser.id} - ${currentUser.username}`);
 
     const data = await this.prisma.user.findMany({
@@ -156,7 +154,7 @@ export class UserService {
     return data;
   }
 
-  async update(id: string, data: UpdateUserDto, currentUser: CurrentUser): Promise<UserResponse> {
+  async update(id: string, data: UpdateUserDto, currentUser: User): Promise<User> {
     try {
       this.logger.log(`Updating user: ${JSON.stringify(data)}, user: ${currentUser.id} - ${currentUser.username}`);
 
@@ -176,13 +174,13 @@ export class UserService {
 
       this.clearCache();
 
-      return this.cleanUser([updatedUser])[0];
+      return this.mapUserWithRoles([updatedUser])[0];
     } catch (error) {
       this.exHandler.process(error, 'Error updating the user');
     }
   }
 
-  private async updateUserRoles(userId: string, newRoles: string[], currentUser: CurrentUser): Promise<void> {
+  private async updateUserRoles(userId: string, newRoles: string[], currentUser: User): Promise<void> {
     // If newRoles are empty, set a default role
     if (newRoles.length === 0) newRoles.push(RoleId.Staff);
 
@@ -257,7 +255,7 @@ export class UserService {
     });
   }
 
-  async remove(id: string, currentUser: CurrentUser): Promise<UserResponse> {
+  async remove(id: string, currentUser: User): Promise<User> {
     try {
       this.logger.log(`Removing user: ${id}, user: ${currentUser.id} - ${currentUser.username}`);
 
@@ -277,13 +275,13 @@ export class UserService {
 
       this.clearCache();
 
-      return this.cleanUser([updatedUser])[0];
+      return this.mapUserWithRoles([updatedUser])[0];
     } catch (error) {
       this.exHandler.process(error, 'Error removing the user');
     }
   }
 
-  async restore(id: string, currentUser: CurrentUser): Promise<UserResponse> {
+  async restore(id: string, currentUser: User): Promise<User> {
     try {
       this.logger.log(`Restoring user: ${id}, user: ${currentUser.id} - ${currentUser.username}`);
       const user = await this.findOne(id, currentUser);
@@ -302,7 +300,7 @@ export class UserService {
 
       this.clearCache();
 
-      return this.cleanUser([updatedUser])[0];
+      return this.mapUserWithRoles([updatedUser])[0];
     } catch (error) {
       this.exHandler.process(error, 'Error restoring the user');
     }
@@ -324,13 +322,10 @@ export class UserService {
     this.cacheManager.reset();
   }
 
-  private cleanUser(users: PrismaUserList[]): UserResponse[] {
-    return users.map(({ userRoles, ...user }) => {
-      const roles = userRoles.map(({ role }) => ({ id: role.id, name: role.name }));
-      return {
-        ...user,
-        roles,
-      };
-    });
+  private mapUserWithRoles(users: PrismaUser[]): User[] {
+    return users.map(({ userRoles, ...user }) => ({
+      ...user,
+      roles: userRoles.map(({ role }) => ({ id: role.id, name: role.name })),
+    }));
   }
 }

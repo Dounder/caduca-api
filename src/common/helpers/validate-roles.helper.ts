@@ -1,4 +1,4 @@
-import { RoleId, RoleItem } from 'src/user';
+import { RoleId, Role } from 'src/user';
 
 /**
  * Checks if a user has any of the specified valid roles.
@@ -16,6 +16,6 @@ import { RoleId, RoleItem } from 'src/user';
  * - The function uses Array.some() to check if at least one role matches
  * - Role IDs are type-casted to RoleId type for type safety
  */
-export const hasRoles = (userRoles: RoleItem[], validRoles: RoleId[]) => {
+export const hasRoles = (userRoles: Role[], validRoles: RoleId[]) => {
   return userRoles.some((role) => validRoles.includes(role.id as RoleId));
 };

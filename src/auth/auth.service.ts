@@ -5,7 +5,7 @@ import * as bcrypt from 'bcrypt';
 import { ExceptionHandler, ObjectManipulator } from 'src/common';
 import { envs } from 'src/config';
 import { PrismaService } from 'src/prisma/prisma.service';
-import { USER_SELECT_SINGLE_PWD } from 'src/user';
+import { User, USER_SELECT_SINGLE, USER_SELECT_SINGLE_PWD } from 'src/user';
 import { LoginDto } from './dto';
 import { AuthResponse, JwtPayload, SignedToken } from './interfaces';
 
@@ -59,7 +59,7 @@ export class AuthService {
       const roles = user.userRoles.map((role) => role.role);
       const cleanUser = ObjectManipulator.exclude(user, ['password', 'userRoles']);
 
-      return { user: { ...cleanUser, roles }, token: this.signToken({ id: user.id }) };
+      return { user: { ...cleanUser, roles } as User, token: this.signToken({ id: user.id }) };
     } catch (error) {
       this.exHandler.process(error);
     }
@@ -89,14 +89,14 @@ export class AuthService {
 
       const user = await this.prisma.user.findFirst({
         where: { id },
-        select: USER_SELECT_SINGLE_PWD,
+        select: USER_SELECT_SINGLE,
       });
 
       if (!user) throw new UnauthorizedException({ status: HttpStatus.UNAUTHORIZED, message: 'Invalid token' });
 
       const tokenSigned = this.signToken({ id: user.id });
-      const roles = user.userRoles.map((role) => role.role);
-      const cleanUser = ObjectManipulator.exclude(user, ['password', 'userRoles']);
+      const { userRoles, ...cleanUser } = user;
+      const roles = userRoles.map((role) => role.role);
 
       return { user: { ...cleanUser, roles }, token: tokenSigned };
     } catch (error) {

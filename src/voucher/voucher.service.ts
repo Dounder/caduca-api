@@ -10,7 +10,7 @@ import {
 import { PaginationDto } from 'src/common';
 import { ExceptionHandler, hasRoles } from 'src/common';
 import { PrismaService } from 'src/prisma/prisma.service';
-import { CurrentUser, RoleId } from 'src/user';
+import { User, RoleId } from 'src/user';
 import { CreateVoucherDto, UpdateVoucherDto, UpdateVoucherItemDto } from './dto';
 import { validateVoucherStatusChange, VOUCHER_SELECT_LIST, VOUCHER_SELECT_SINGLE } from './helpers';
 import { VoucherResponse, VoucherStatus } from './interfaces';
@@ -23,7 +23,7 @@ export class VoucherService {
 
   constructor(private readonly prisma: PrismaService) {}
 
-  async create(createVoucherDto: CreateVoucherDto, user: CurrentUser) {
+  async create(createVoucherDto: CreateVoucherDto, user: User) {
     const { items, ...data } = createVoucherDto;
     const message = `Creating voucher: ${JSON.stringify(data)} with: ${items.length} items, user: ${user.username} (${user.id})`;
     this.logger.log(message);
@@ -44,7 +44,7 @@ export class VoucherService {
     }
   }
 
-  async findAll(pagination: PaginationDto, user: CurrentUser) {
+  async findAll(pagination: PaginationDto, user: User) {
     const { page, limit, search } = pagination;
     const isAdmin = hasRoles(user.roles, [RoleId.Admin]);
     const where = {
@@ -76,7 +76,7 @@ export class VoucherService {
     return { meta: { total, page, lastPage }, data };
   }
 
-  async findOne(id: string, user: CurrentUser): Promise<VoucherResponse> {
+  async findOne(id: string, user: User): Promise<VoucherResponse> {
     this.logger.log(`Fetching voucher: ${id}, user: ${user.username} (${user.id})`);
     try {
       const isAdmin = hasRoles(user.roles, [RoleId.Admin]);
@@ -99,7 +99,7 @@ export class VoucherService {
     }
   }
 
-  async findOneByNumber(number: number, user: CurrentUser) {
+  async findOneByNumber(number: number, user: User) {
     this.logger.log(`Fetching voucher: #${number}, user: ${user.username} (${user.id})`);
     try {
       const isAdmin = hasRoles(user.roles, [RoleId.Admin]);
@@ -122,7 +122,7 @@ export class VoucherService {
     }
   }
 
-  async update(id: string, updateDto: UpdateVoucherDto, user: CurrentUser): Promise<VoucherResponse> {
+  async update(id: string, updateDto: UpdateVoucherDto, user: User): Promise<VoucherResponse> {
     const { status, items } = updateDto;
     this.logger.log(`Updating voucher: ${id}, user: ${user.username} (${user.id})`);
 
@@ -167,7 +167,7 @@ export class VoucherService {
     }
   }
 
-  async remove(id: string, user: CurrentUser) {
+  async remove(id: string, user: User) {
     const message = `Deleting voucher: ${id}, user: ${user.username} (${user.id})`;
     this.logger.log(message);
     try {
@@ -194,7 +194,7 @@ export class VoucherService {
     }
   }
 
-  async restore(id: string, user: CurrentUser) {
+  async restore(id: string, user: User) {
     const message = `Restoring voucher: ${id}, user: ${user.username} (${user.id})`;
     this.logger.log(message);
     try {
@@ -221,7 +221,7 @@ export class VoucherService {
     }
   }
 
-  async updateItems(voucherId: string, items: UpdateVoucherItemDto[], user: CurrentUser) {
+  async updateItems(voucherId: string, items: UpdateVoucherItemDto[], user: User) {
     if (!items || items.length === 0)
       throw new BadRequestException({ status: HttpStatus.BAD_REQUEST, message: 'Items are required' });
 

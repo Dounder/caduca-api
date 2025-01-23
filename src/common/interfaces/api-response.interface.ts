@@ -1,4 +1,4 @@
-import { CurrentUser, UserSummary } from 'src/user';
+import { User, UserSummary } from 'src/user';
 import { PaginationDto } from '../dto';
 
 export interface ListResponse<T> {
@@ -34,7 +34,7 @@ export interface BaseListResponse {
 
 export interface FindAllParams {
   pagination: PaginationDto;
-  user: CurrentUser;
+  user: User;
   summary?: boolean;
 }
 

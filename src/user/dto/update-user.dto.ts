@@ -3,30 +3,29 @@ import { IsArray, IsEmail, IsEnum, IsOptional, IsString, MinLength } from 'class
 import { RoleId } from '../interfaces';
 
 /**
- * Data Transfer Object (DTO) for updating a user's information.
- * Extends the `CreateUserDto` with optional fields and includes the `id` of the user to be updated.
+ * Data Transfer Object for updating user information.
+ * All fields are optional, allowing partial updates.
+ *
+ * @remarks
+ * - Username and email are automatically trimmed and converted to lowercase
+ * - Roles must be valid entries from the RoleId enum
+ *
+ * @example
+ * ```typescript
+ * {
+ *   username: "johndoe",
+ *   email: "john@example.com",
+ *   roles: [RoleId.USER, RoleId.ADMIN]
+ * }
+ * ```
  */
 export class UpdateUserDto {
-  /**
-   * The username of the user.
-   * Must be a string with a minimum length of 2 characters.
-   * Transformed to be trimmed and lowercase.
-   *
-   * @type {string}
-   */
   @IsString()
   @MinLength(2)
   @Transform(({ value }) => value.trim().toLowerCase())
   @IsOptional()
   username?: string;
 
-  /**
-   * The email address of the user.
-   * Must be a valid email string.
-   * Transformed to be trimmed and lowercase.
-   *
-   * @type {string}
-   */
   @IsString()
   @IsEmail()
   @Transform(({ value }) => value.trim().toLowerCase())
