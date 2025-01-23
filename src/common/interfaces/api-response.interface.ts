@@ -23,6 +23,15 @@ export interface BaseResponse {
   deletedBy: UserSummary | null;
 }
 
+export interface BaseListResponse {
+  id: string;
+
+  createdAt: Date | null;
+  updatedAt: Date | null;
+  deletedAt: Date | null;
+  createdBy: UserSummary | null;
+}
+
 export interface FindAllParams {
   pagination: PaginationDto;
   user: CurrentUser;
