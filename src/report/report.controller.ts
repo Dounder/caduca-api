@@ -40,21 +40,6 @@ export class ReportController {
   }
 
   /**
-   * Generates a report for salespersons and sends it as a response
-   *
-   * @param {Response} res - Express Response object to handle the HTTP response
-   * @returns {Promise<void>} A promise that resolves when the report is generated and sent
-   *
-   * @remarks
-   * This endpoint streams the report directly to the client using the Response object.
-   * The actual report generation is handled by the reportService.
-   */
-  @Get('salespersons')
-  getReportSalespersons(@Res() res: Response) {
-    return this.reportService.generateSalespersonReport(res);
-  }
-
-  /**
    * Generates a report containing product information and sends it as a response.
    *
    * @param res - Express Response object used to send the report

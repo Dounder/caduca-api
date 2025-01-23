@@ -1,51 +1,45 @@
 import 'base'
 import 'product'
 import 'customer'
-import 'salesperson'
 import 'voucher'
 
 model User extends Base {
   @@map("user")
-  username              String           @unique() @db.VarChar(20)
-  email                 String           @unique() @db.VarChar(50)
-  password              String           @db.VarChar(256)
+  username           String        @unique() @db.VarChar(20)
+  email              String        @unique() @db.VarChar(50)
+  password           String        @db.VarChar(256)
 
-  userRoles             UserRole[]       @relation("UserRoleAssigned")
-  assignedRoles         UserRole[]       @relation("UserRoleAssigner")
+  userRoles          UserRole[]    @relation("UserRoleAssigned")
+  assignedRoles      UserRole[]    @relation("UserRoleAssigner")
 
-  createdBy             User?            @relation("UserCreator", fields: [createdById], references: [id])
-  creatorOf             User[]           @relation("UserCreator")
+  createdBy          User?         @relation("UserCreator", fields: [createdById], references: [id])
+  creatorOf          User[]        @relation("UserCreator")
 
-  updatedBy             User?            @relation("UserUpdater", fields: [updatedById], references: [id])
-  updaterOf             User[]           @relation("UserUpdater")
+  updatedBy          User?         @relation("UserUpdater", fields: [updatedById], references: [id])
+  updaterOf          User[]        @relation("UserUpdater")
 
-  deletedBy             User?            @relation("UserDeleter", fields: [deletedById], references: [id])
-  deleterOf             User[]           @relation("UserDeleter")
+  deletedBy          User?         @relation("UserDeleter", fields: [deletedById], references: [id])
+  deleterOf          User[]        @relation("UserDeleter")
 
-  productCreated        Product[]        @relation("ProductCreator")
-  productUpdated        Product[]        @relation("ProductUpdater")
-  productDeleted        Product[]        @relation("ProductDeleter")
-  productCodeCreated    ProductCode[]    @relation("ProductCodeCreator")
-  productCodeUpdated    ProductCode[]    @relation("ProductCodeUpdater")
-  productCodeDeleted    ProductCode[]    @relation("ProductCodeDeleter")
+  productCreated     Product[]     @relation("ProductCreator")
+  productUpdated     Product[]     @relation("ProductUpdater")
+  productDeleted     Product[]     @relation("ProductDeleter")
+  productCodeCreated ProductCode[] @relation("ProductCodeCreator")
+  productCodeUpdated ProductCode[] @relation("ProductCodeUpdater")
+  productCodeDeleted ProductCode[] @relation("ProductCodeDeleter")
 
-  customerCreated       Customer[]       @relation("CustomerCreator")
-  customerUpdated       Customer[]       @relation("CustomerUpdater")
-  customerDeleted       Customer[]       @relation("CustomerDeleter")
-  CustomerLogCreator    CustomerLog[]    @relation("CustomerLogCreator")
+  customerCreated    Customer[]    @relation("CustomerCreator")
+  customerUpdated    Customer[]    @relation("CustomerUpdater")
+  customerDeleted    Customer[]    @relation("CustomerDeleter")
+  CustomerLogCreator CustomerLog[] @relation("CustomerLogCreator")
 
-  salespersonCreated    Salesperson[]    @relation("SalespersonCreator")
-  salespersonUpdated    Salesperson[]    @relation("SalespersonUpdater")
-  salespersonDeleted    Salesperson[]    @relation("SalespersonDeleter")
-  SalespersonLogCreator SalespersonLog[] @relation("SalespersonLogCreator")
-
-  voucherCreated        Voucher[]        @relation("VoucherCreator")
-  voucherUpdated        Voucher[]        @relation("VoucherUpdater")
-  voucherDeleted        Voucher[]        @relation("VoucherDeleter")
-  voucherLogCreator     VoucherLog[]     @relation("VoucherLogCreator")
-  voucherItemCreated    VoucherItem[]    @relation("VoucherItemCreator")
-  voucherItemUpdated    VoucherItem[]    @relation("VoucherItemUpdater")
-  voucherItemDeleted    VoucherItem[]    @relation("VoucherItemDeleter")
+  voucherCreated     Voucher[]     @relation("VoucherCreator")
+  voucherUpdated     Voucher[]     @relation("VoucherUpdater")
+  voucherDeleted     Voucher[]     @relation("VoucherDeleter")
+  voucherLogCreator  VoucherLog[]  @relation("VoucherLogCreator")
+  voucherItemCreated VoucherItem[] @relation("VoucherItemCreator")
+  voucherItemUpdated VoucherItem[] @relation("VoucherItemUpdater")
+  voucherItemDeleted VoucherItem[] @relation("VoucherItemDeleter")
 }
 
 model Role {

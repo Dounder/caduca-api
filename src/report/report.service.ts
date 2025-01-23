@@ -126,62 +126,6 @@ export class ReportService {
   }
 
   /**
-   * Generates an Excel report containing salesperson information.
-   *
-   * The report includes the following columns:
-   * - Code (Código)
-   * - Name (Nombre)
-   * - Status (Estado)
-   *
-   * The status is determined by the deletedAt field:
-   * - If deletedAt is null, status is "Activo"
-   * - If deletedAt has a value, status is "Inactivo"
-   *
-   * @param res - Express Response object used to send the generated Excel file
-   * @returns Promise that resolves when the file has been generated and sent
-   *
-   * @remarks
-   * The data is fetched in batches using the Prisma client.
-   * The Excel file is named 'vendedores.xlsx' and contains a worksheet named 'Vendedores'.
-   *
-   * @throws {PrismaClientKnownRequestError} If there's an error accessing the database
-   * @throws {Error} If there's an error generating the Excel file
-   */
-  async generateSalespersonReport(@Res() res: Response): Promise<void> {
-    this.logger.log('Generating salesperson report');
-
-    // Define columns for the users report
-    const columns = [
-      { header: 'Código', key: 'code', width: 10 },
-      { header: 'Nombre', key: 'name', width: 30 },
-      { header: 'Estado', key: 'status', width: 30 },
-    ];
-
-    // Define the data fetcher for users
-    const dataFetcher = async (skip: number, take: number) => {
-      const data = await this.prisma.salesperson.findMany({
-        skip,
-        take,
-        select: { code: true, name: true, deletedAt: true },
-      });
-
-      return data.map((item) => ({
-        ...item,
-        status: item.deletedAt ? 'Inactivo' : 'Activo',
-      }));
-    };
-
-    // Generate the report
-    await GenerateReportUtils.exportExcelFile({
-      res,
-      filename: 'vendedores',
-      worksheetName: 'Vendedores',
-      columns,
-      dataFetcher,
-    });
-  }
-
-  /**
    * Generates an Excel report containing product information.
    *
    * @param res - Express Response object used to send the generated Excel file
