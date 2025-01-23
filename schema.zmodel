@@ -1,5 +1,7 @@
 import 'user'
 import 'product'
+import 'customer'
+import 'voucher'
 
 datasource db {
   provider = "postgresql"

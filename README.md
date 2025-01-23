@@ -15,3 +15,10 @@ Esta es la aplicación backend para el sistema de vales de producto vencido, con
 5. Ejecuta `pnpm prisma generate` para generar el cliente de Prisma
 6. Ejecuta `pnpm prisma migrate dev` para aplicar las migraciones
 7. Ejecuta `pnpm start:dev` para iniciar el servidor de desarrollo
+
+## Notas
+
+- La aplicación utiliza Prisma como ORM para interactuar con la base de datos PostgreSQL
+- La aplicación utiliza Passport.js para la autenticación de usuarios
+- La aplicación utiliza NestJS para la estructura y la lógica de negocio
+- Para la creación de nuevos modelos y relaciones, leer el archivo [ZENSTACK.md](ZENSTACK.md)
